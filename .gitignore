@@ -1,0 +1,15 @@
+.idea/
+*.pyc
+.DS_Store
+.project
+.pydevproject
+*.json
+*.csv
+*.pickle
+*.pkl
+*.pk
+results/
+figures/
+pdp/
+logs/
+datasets/
