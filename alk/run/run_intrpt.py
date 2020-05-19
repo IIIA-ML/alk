@@ -43,7 +43,7 @@ logger = logging.getLogger("ALK")
 
 
 def _create_exp_intrpt_engine(dataset, pdp_file, tw_width, tw_step, k, conf_tholds, z, test_size, similarity=None,
-                              cls_rank_iterator=alk.TopDownCandidates, gen_profile=None):
+                              cls_rank_iterator=alk.TopDownIterator, gen_profile=None):
     """ Creates an interruption experiment engine.
 
     Returns:

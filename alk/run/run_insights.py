@@ -53,7 +53,7 @@ logger = logging.getLogger("ALK")
 
 
 def _create_exp_insights_engine(dataset, tw_width, tw_step, k, test_size, similarity=None,
-                                cls_rank_iterator=alk.TopDownCandidates, n_exp=1, gen_profile=None):
+                                cls_rank_iterator=alk.TopDownIterator, n_exp=1, gen_profile=None):
     """ Creates an insights experiment engine.
 
     Returns:

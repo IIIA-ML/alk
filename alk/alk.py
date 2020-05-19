@@ -503,7 +503,7 @@ class RankIterator:
         return "{} Iterator over Rank(seq:{})".format(type(self).__name__, self.rank.seq_id)
 
 
-class TopDownCandidates(RankIterator):
+class TopDownIterator(RankIterator):
     """Yields candidates in a top-down fashion along the rank stages."""
 
     def __iter__(self):
