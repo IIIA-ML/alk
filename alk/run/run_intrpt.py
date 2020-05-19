@@ -101,6 +101,7 @@ def main(argv=None):
     tw_width = exp_ins_settings.tw_width
     tw_step = exp_ins_settings.tw_step
     cls_rank_iterator = exp_ins_settings.cls_rank_iterator
+    cls_rank_iterator.set_cls_attr(**exp_ins_settings.cls_rank_iterator_attrs)   # Set class attributes. We do it like this because class attrs are not pickled.
     # Generate file names
     out_file = args.outfile if args.outfile else intrpt.gen_intrpt_output_f_path(dataset, args.pdpfile, tw_width, tw_step, k, args.confthold, args.z, args.testsize, cls_rank_iterator)
     log_file = args.logfile if args.logfile else common.gen_log_file(out_file)

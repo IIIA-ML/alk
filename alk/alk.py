@@ -284,6 +284,9 @@ class Rank:
         Returns:
             None:
 
+        Raises:
+             RuntimeError: If `rank` already has a `cur_stage`
+
         """
         if self.cur_stage is None:
             self.cur_stage = Stage(delta=delta)
@@ -307,7 +310,9 @@ class Rank:
             otherwise, `assess` is appended to `cur_stage.nn`.
 
         Raises:
-            TypeError, ValueError, RuntimeError:
+            TypeError: If `assess` is not an `Assessment`object
+            ValueError: If `k` OR `to_beat_idx` are not valid
+            RuntimeError: If `cur_stage` is None
 
         Returns:
             int: The zero-based index of the added `assess` in the `cur_stage.nn`. Note that this index is
@@ -413,14 +418,15 @@ class RankIterator:
             delta (float): distance(q^u-1, q^u)
 
         Raises:
-            TypeError, RuntimeError:
+            TypeError: If `rank`is not a `Rank` object
+            RuntimeError: If `rank` already has a `cur_stage`
 
         """
         if not isinstance(rank, Rank):
             raise TypeError("Expected a `Rank` object for `rank`, got {}".format(type(rank)))
         if rank.cur_stage is not None:
             raise RuntimeError("{} cannot be instantiated with a Rank "
-                               "that has a current stage.".format(self.__class__.__name__))
+                               "that has a current stage.".format(type(self).__name__))
         self.rank = rank
         self.nn_idx = 0
         self.stage_idx = None
@@ -463,6 +469,28 @@ class RankIterator:
         """
         pass
 
+    @classmethod
+    def set_cls_attr(cls, **kwargs):
+        """Sets public 'class' attributes
+
+        Used when a subclass has class attribute(s) that need(s) to be set before creating its instances.
+        Typical callees are the `run_~` experiment scripts which call this method with arguments passed from the command
+        line.
+
+        Given keyword arguments must match defined 'public' class attribute names.
+
+        Args:
+            **kwargs: key=value pairs for class attributes
+
+        Returns:
+            None:
+
+        Raises:
+            AttributeError: If a non-existing or private attribute is tried to be set.
+
+        """
+        common.set_public_attrs(cls, **kwargs)
+
     def __iter__(self):
         """Should be implemented by sub-classes.
 
@@ -472,14 +500,14 @@ class RankIterator:
         raise NotImplementedError
 
     def __repr__(self):
-        return "{} Iterator over Rank(seq:{})".format(self.__class__.__name__, self.rank.seq_id)
+        return "{} Iterator over Rank(seq:{})".format(type(self).__name__, self.rank.seq_id)
 
 
 class TopDownCandidates(RankIterator):
     """Yields candidates in a top-down fashion along the rank stages."""
 
     def __iter__(self):
-        logger.debug(".......... {} RANK iteration for kNN[{}]".format(
+        logger.debug(".......... {} TopDown RANK iteration for kNN[{}]".format(
             "*resuming*" if self.stage_idx is not None and self.rank.is_being_iterated() else "starting",
             self.nn_idx))
         for self.stage_idx in range(len(self.rank)):  # Note! Uses instance attribute as the loop variable to update it.
@@ -489,7 +517,54 @@ class TopDownCandidates(RankIterator):
                 candidate = self.rank.pop(self.stage_idx, 0)  # Pop the top
                 candidate.found_stage = self.stage_idx
                 yield candidate
-        logger.debug("............ RANK iteration ended for kNN[{}]".format(self.nn_idx))
+        logger.debug("............ TopDown RANK iteration ended for kNN[{}]".format(self.nn_idx))
+        # Iteration completed, set the index of the kNN member to beat at the next iteration
+        self.nn_idx += 1
+        # Reset the iterated stage_idx
+        self.stage_idx = None
+
+
+class JumpingIterator(RankIterator):
+    """After every ​n^th candidates, assesses the candidacy of top of the next stage in ​`Rank`
+
+    If that is a true candidate, evaluate it, and continue back with the current stage.
+    It is implemented to check if this random behavior improves the gain by reducing the number of candidates.
+
+    """
+
+    # `jump_at` class attribute has to be set by the callee via `set_cls_attr` class method
+    # And, it's advised to be used as read-only by class instances; if overwritten, this would shadow the class attr.
+    jump_at = None
+
+    def __iter__(self):
+        logger.debug(".......... {} Jumping RANK iteration for kNN[{}]".format(
+            "*resuming*" if self.stage_idx is not None and self.rank.is_being_iterated() else "starting",
+            self.nn_idx))
+        if self.jump_at is None or not(isinstance(self.jump_at, int) and self.jump_at > 0):
+            raise ValueError("`jump_at` should be an integer > 0, got {}".format(self.jump_at))
+        len_rank = len(self.rank)
+        for self.stage_idx in range(len_rank):  # Note! Uses instance attribute as the loop variable to update it.
+            candidates_in_stage_idx = 0  # counter for the candidates found in stage
+            just_jumped = False  # reset the flag for every stage
+            while (not self.rank.is_stage_empty(self.stage_idx)
+                   and self.is_candidate(self.rank[self.stage_idx][0], self.stage_idx)):
+                ready_to_jump = (not just_jumped  # Don't jump if you are already coming from there
+                                 and self.stage_idx < len_rank - 1  # There exists a stage to jump to
+                                 and candidates_in_stage_idx > 0  # Don't jump too early
+                                 and candidates_in_stage_idx % self.jump_at == 0  # Only after every `jump_at` candidates
+                                 and not self.rank.is_stage_empty(self.stage_idx + 1)  # Don't jump to a blank stage
+                                 and self.is_candidate(self.rank[self.stage_idx + 1][0], self.stage_idx + 1))  # Jump if it's worth
+                if ready_to_jump:
+                    just_jumped = True
+                    candidate = self.rank.pop(self.stage_idx + 1, 0)  # Pop the top from the next stage
+                    candidate.found_stage = self.stage_idx + 1
+                else:
+                    just_jumped = False
+                    candidate = self.rank.pop(self.stage_idx, 0)  # Pop the top from the currently searched stage
+                    candidate.found_stage = self.stage_idx
+                    candidates_in_stage_idx += 1
+                yield candidate
+        logger.debug("............ Jumping RANK iteration ended for kNN[{}]".format(self.nn_idx))
         # Iteration completed, set the index of the kNN member to beat at the next iteration
         self.nn_idx += 1
         # Reset the iterated stage_idx
@@ -569,14 +644,7 @@ class NNInsights:
             AttributeError: If a non-existing or private attribute is tried to be set.
 
         """
-
-        allowed_attrs = common.public_attrs(self)  # public attrs only
-        # Validate
-        if not set(kwargs.keys()).issubset(allowed_attrs):
-            raise AttributeError("{} is not within the allowed attributes: {}.".format(
-                set(kwargs.keys()).difference(allowed_attrs), allowed_attrs))
-        # Update instance's attribute dictionary
-        self.__dict__.update((k, v) for k, v in kwargs.items())
+        common.set_public_attrs(self, **kwargs)
 
     def add_history(self, calc, sim):
         """Add (calc, sim) to the history of this NN.

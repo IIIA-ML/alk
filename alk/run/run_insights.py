@@ -1,7 +1,8 @@
 """Script to launch experiment(s) to collect gain and knn insights data.
 
 usage: run_insights.py [-h] [-k K] [-t TESTSIZE] [-w WIDTH] [-s STEP]
-                       [-o OUTFILE] [-l LOGFILE] [--runs RUNS] [--iter {td}]
+                       [-o OUTFILE] [-l LOGFILE] [--runs RUNS] [--iter {td,j}]
+                       [--kwargsiter [KWARGSITER [KWARGSITER ...]]]
                        [--logc {DEBUG,INFO}] [--logf {DEBUG,INFO}]
                        dataset
 
@@ -22,7 +23,11 @@ optional arguments:
   -l LOGFILE, --logfile LOGFILE
                         Log file path (default: None)
   --runs RUNS           Number of experiment runs (default: 1)
-  --iter {td}           Rank iteration: td: Top-down (default: td)
+  --iter {td,j}         Rank iteration -> td: Top-down, j: Jumping (default:
+                        td)
+  --kwargsiter [KWARGSITER [KWARGSITER ...]]
+                        keyword args entered in attribute=value format to set
+                        iterator class' class attributes (default: None)
   --logc {DEBUG,INFO}   console logger level (default: INFO)
   --logf {DEBUG,INFO}   file logger level (default: INFO)
 
@@ -39,7 +44,7 @@ import os
 import sys
 import time
 
-from alk import alk, common
+from alk import alk, common, helper
 from alk.exp import ts, insights
 from alk.run import run_common
 
@@ -89,14 +94,24 @@ def _parse_args(argv):
                         help="Number of experiment runs")
     parser.add_argument("--iter", choices=run_common.RANK_ITER_ARG_CHOICES, default=run_common.RANK_ITER_ARG_CHOICES[0],
                         help="Rank iteration -> " + run_common.RANK_ITER_ARG_HELP)
-    # parser.add_argument("--jump", type=int, nargs='+', default=None,
-    #                     help="if is not None, jumping vs normal candidacy assessment test is carried out")
+    parser.add_argument("--kwargsiter", nargs="*", type=str,
+                        help="keyword args entered in attribute=value format to set iterator class' class attributes")
     parser.add_argument("--logc", choices=["DEBUG", "INFO"], default="INFO",
                         help="console logger level")
     parser.add_argument("--logf", choices=["DEBUG", "INFO"], default="INFO",
                         help="file logger level")
     # Parse arguments
     args = parser.parse_args(argv)
+
+    # Eval iterator class attributes
+    kwargs_iter = {}
+    if args.kwargsiter:
+        for kwa in args.kwargsiter:
+            # Try to convert a string to its real type
+            k = kwa.split("=")[0]
+            v = kwa.split("=")[1]
+            kwargs_iter[k] = helper.eval_str(v)
+    args.kwargsiter = kwargs_iter
 
     return args
 
@@ -107,10 +122,11 @@ def main(argv=None):
     args = _parse_args(argv)
     dataset = os.path.expanduser(args.dataset)
     cls_rank_iterator = run_common.RANK_ITER_OPTIONS[args.iter]["cls"]
+    cls_rank_iterator.set_cls_attr(**args.kwargsiter)  # Set class attributes
     # jump_at = args.jump
     # jump_at_tag = "_jump_[{}]".format("_".join([str(j) for j in jump_at])) if jump_at is not None else ""
     # Generate file names
-    out_file = args.outfile if args.outfile else insights.gen_insights_ouput_f_path(dataset, args.width, args.step, args.k, args.testsize)
+    out_file = args.outfile if args.outfile else insights.gen_insights_ouput_f_path(dataset, args.width, args.step, args.k, args.testsize, args.iter)
     log_file = args.logfile if args.logfile else common.gen_log_file(out_file)
     # Set logger
     logger = common.initialize_logger(console_level=args.logc, output_dir=common.APP.FOLDER.LOG, log_file=log_file, file_level=args.logf)
@@ -121,7 +137,7 @@ def main(argv=None):
     processed_insights = engine.run()
     # create a result obj
     output = insights.ExpInsightsOutput(settings=insights.ExpInsightsSettings(dataset, args.width, args.step, args.k, args.testsize,
-                                                                              engine.cb.size(), cls_rank_iterator),
+                                                                              engine.cb.size(), cls_rank_iterator, args.kwargsiter),
                                         data=processed_insights)
     logger.info("Insights experiment finished in {}.".format(datetime.timedelta(seconds=(time.time() - start_time))))
     # save the output

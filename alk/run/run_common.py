@@ -3,7 +3,8 @@
 from alk import alk
 
 # To be used in script argument choices for the `alk.RankIterator` classes
-RANK_ITER_OPTIONS = {"td": {"cls": alk.TopDownCandidates, "help": "Top-down"}}
+RANK_ITER_OPTIONS = {"td": {"cls": alk.TopDownCandidates, "help": "Top-down"},
+                     "j": {"cls": alk.JumpingIterator, "help": "Jumping"}}
 RANK_ITER_ARG_CHOICES = list(RANK_ITER_OPTIONS.keys())
 RANK_ITER_ARG_HELP = ", ".join(["{}: {}".format(c, RANK_ITER_OPTIONS[c]["help"]) for c in RANK_ITER_OPTIONS.keys()])
 

@@ -324,7 +324,7 @@ class ExpInsightsSettings:
             cls_rank_iterator (str): Used RankIterator class's name
 
     """
-    def __init__(self, dataset, tw_width, tw_step, k, test_size, cb_size, cls_rank_iterator):
+    def __init__(self, dataset, tw_width, tw_step, k, test_size, cb_size, cls_rank_iterator, cls_rank_iterator_attrs):
         """
 
         Args:
@@ -337,6 +337,7 @@ class ExpInsightsSettings:
             test_size (float): (0., 1.) ratio of the time series dataset to be used as Test CB
             cb_size (int): Number of cases in the Train CB
             cls_rank_iterator (str): Used RankIterator class's name
+            cls_rank_iterator_attrs (dict): Used RankIterator class's class attributes, if any.
 
         """
         self.dataset = dataset
@@ -346,6 +347,7 @@ class ExpInsightsSettings:
         self.test_size = test_size
         self.cb_size = cb_size
         self.cls_rank_iterator = cls_rank_iterator
+        self.cls_rank_iterator_attrs = cls_rank_iterator_attrs
 
 
 class ExpInsightsOutput(exp_common.Output):
@@ -433,10 +435,10 @@ class ExpInsightsEngine:
         return processed_insights
 
 
-def gen_insights_ouput_f_path(dataset, tw_width, tw_step, k, test_size, suffix=""):
+def gen_insights_ouput_f_path(dataset, tw_width, tw_step, k, test_size, key_cls_rank_iter, suffix=""):
     """Returns full path of the output file for the insights experiment results"""
     dataset_name = os.path.splitext(os.path.basename(dataset))[0]  # Base file name w/o extension
     out_file = os.path.join(common.APP.FOLDER.RESULT,
-                               "INS_{d}_w_{w}_s_{s}_k_{k}_t_{t}{x}{e}".format(
-                                   d=dataset_name, w=tw_width, s=tw_step, k=k, t=str(test_size), x=suffix, e=common.APP.FILE_EXT.PICKLE))
+                               "INS_{d}_w_{w}_s_{s}_k_{k}_t_{t}_{i}{x}{e}".format(
+                                   d=dataset_name, w=tw_width, s=tw_step, k=k, t=str(test_size), i=key_cls_rank_iter, x=suffix, e=common.APP.FILE_EXT.PICKLE))
     return out_file
