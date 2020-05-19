@@ -322,6 +322,7 @@ class ExpInsightsSettings:
             test_size (float): (0., 1.) ratio of the time series dataset to be used as Test CB
             cb_size (int): Number of cases in the Train CB
             cls_rank_iterator (str): Used RankIterator class's name
+            cls_rank_iterator_attrs (dict): Used RankIterator class's class attributes, if any.
 
     """
     def __init__(self, dataset, tw_width, tw_step, k, test_size, cb_size, cls_rank_iterator, cls_rank_iterator_attrs):
