@@ -44,6 +44,36 @@ def public_attrs(obj):
     return set(a for a in obj.__dict__.keys() if not a.startswith("_"))  # public attrs only
 
 
+def set_public_attrs(entity, **kwargs):
+    """Sets given entity's public attributes
+
+    Given keyword arguments must match defined 'public' class attribute names.
+
+    Args:
+        entity (object): A 'class' or a 'class instance', i.e. `cls` or `self`.
+        **kwargs: key=value pairs for class/instance attributes
+
+    Returns:
+        None:
+
+    Raises:
+        AttributeError: If a non-existing or private attribute is tried to be set.
+
+    """
+    if not kwargs:
+        return
+
+    allowed_attrs = public_attrs(entity)  # public attrs only
+    # Validate
+    if not set(kwargs.keys()).issubset(allowed_attrs):
+        raise AttributeError("{} is not within the allowed attributes: {}.".format(
+            set(kwargs.keys()).difference(allowed_attrs), allowed_attrs))
+    # Update entity's attributes
+    # entity.__dict__.update((k, v) for k, v in kwargs.items())  # Class entity does not support this
+    for k, v in kwargs.items():
+        setattr(entity, k, v)
+
+
 def dump_obj(obj, f_path):
     """Dumps the `obj` into a pickle file at `f_path`
 
