@@ -7,7 +7,7 @@ _ALK_ can be interrupted earlier and it returns _best-so-far_ kNNs together with
 Furthermore, it can automatically interrupt the search upon reaching a given confidence threshold and resume if so asked to.
 
 _ALK_ owes its speed to detecting and assessing only _true kNN candidates_ of the given _query_.
-Candidacy assessment is based on triangle inequality in metric spaces.
+Candidacy assessment is based on the triangle inequality in _metric spaces_.
 An instance in the problem space is evaluated only when it is deemed a candidate by _ALK_, hence the _lazy_.
 
 The algorithm is developed particularly for fast retrieval in _large-scale_ case bases where _temporally related cases_ form sequences.
@@ -60,7 +60,7 @@ $ conda activate alk
 Install required scientific libraries:
 
 ```
-(alk) $ conda install --file requirements.txt
+(alk) $ conda install --file ~/Dev/alk/requirements.txt
 ```
 
 And you are ready to go...
@@ -88,7 +88,7 @@ If not stated otherwise in script arguments, _ALK_ assumes that:
 - Log files are saved in `~/Dev/alk/logs`.
 
 Plots are saved only when a valid output file format is passed as an argument to the `alk.run.fig` script, e.g. `-f png`.
-If a file format is not given, the plot is displayed as a figure.   
+If a file format is not given, the plot is displayed as a figure. For help on a script's command-line arguments, run the script with the `--help` option. 
 
 ### Insights Experiments
 
