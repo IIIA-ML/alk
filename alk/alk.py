@@ -537,9 +537,9 @@ class JumpingIterator(RankIterator):
     jump_at = None
 
     def __iter__(self):
-        logger.debug(".......... {} Jumping RANK iteration for kNN[{}]".format(
+        logger.debug(".......... {} Jumping RANK iteration for kNN[{}] w/ jump_at: {}".format(
             "*resuming*" if self.stage_idx is not None and self.rank.is_being_iterated() else "starting",
-            self.nn_idx))
+            self.nn_idx, self.jump_at))
         if self.jump_at is None or not(isinstance(self.jump_at, int) and self.jump_at > 0):
             raise ValueError("`jump_at` should be an integer > 0, got {}".format(self.jump_at))
         len_rank = len(self.rank)
