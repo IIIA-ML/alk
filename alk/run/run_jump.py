@@ -55,9 +55,8 @@ def _create_exp_jump_engine(dataset, tw_width, tw_step, k, test_size, jump_at_ls
     # read the dataset -> cb
     cb = ts.gen_cb(dataset=dataset, tw_width=tw_width, tw_step=tw_step, gen_profile=gen_profile)
     # create an experiment engine
-    max_val, min_val = ts.get_max_min(dataset)
     if similarity is None:
-        similarity = lambda p1, p2: ts.euclidean_similarity_ts(p1, p2, max_=max_val, min_=min_val)
+        similarity = ts.euclidean_similarity_ts_dataset(dataset)
     engine = jump.ExpJumpEngine(cb=cb, k=k, similarity=similarity, jump_at_lst=jump_at_lst, test_size=test_size)
     return engine
 

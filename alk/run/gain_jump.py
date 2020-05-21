@@ -1,9 +1,4 @@
-#!/usr/bin/env python
-# coding: utf-8
-"""Script to export real average gain for `run_test_jump` experiments.
-
-Author: Oguz Mulayim
-Since: 20200407
+"""Script to export average gain for multiple 'jumping iteration' experiments as a LaTeX table.
 
 usage: gain_jump.py [-h] [-p FPATH] [-d DEC] [--rtrim [RTRIM [RTRIM ...]]]
                     [experiments [experiments ...]]
@@ -25,7 +20,10 @@ optional arguments:
                         _TRAIN, _TEST (default: None)
 
 Examples:
-    $ python -m alk.gain_jump -p ~/Downloads/tmp --rtrim _TRAIN _TEST
+    # First, copy all jumping iteration experiment output files to ~/Desktop/results
+    # Export the LaTeX table for experiments, trim _TRAIN _TEST tags from dataset names
+    $ python -m alk.run.gain_jump -p ~/Desktop/results --rtrim _TRAIN _TEST
+
 """
 
 
