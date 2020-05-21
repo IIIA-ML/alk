@@ -124,7 +124,7 @@ def main(argv=None):
         save_fn = "gain_jump_(x{})_{}".format(len(df_gains_output), jump_at_tag)
         save_fpath = os.path.join(common.APP.FOLDER.FIGURE, "{}.tex".format(save_fn))
         df_gains_output.to_latex(buf=save_fpath, float_format=float_formatter, escape=False, multirow=True, index=True)
-        print("Avg Gain for Normal vs Jumping Candidacy Assessment table saved as LaTeX table into '{}'.".format(save_fpath))
+        print("Avg Gain for TopDown vs Jumping Rank Iterations saved as LaTeX table into '{}'.".format(save_fpath))
     else:
         print("No average gain results could be calculated.")
 
