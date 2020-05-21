@@ -57,7 +57,7 @@ def _create_exp_insights_engine(dataset, tw_width, tw_step, k, test_size, simila
     """ Creates an insights experiment engine.
 
     Returns:
-        ExpInsightsEngine:
+        insights.ExpInsightsEngine:
 
     """
     # read the dataset -> cb
