@@ -6,9 +6,8 @@ import os
 
 import pandas as pd
 
-from alk import common, cbr
+from alk import common, cbr, alk
 from alk.exp import pdp, exp_common
-from alk.run import run_common
 
 
 logger = logging.getLogger("ALK")
@@ -27,10 +26,11 @@ class ExpIntrptSettings:
         conf_tholds (List[float]): List of confidence threshold values [0., 1.]
         z (int): z factor of the efficiency measure used in the experiment
         test_size (float): (0., 1.) ratio of the time series dataset to be used as Test CB
-        cls_rank_iterator (str): Used RankIterator class's name
+        cls_rank_iterator (type): `RankIterator` sub-class used in the experiment
+        cls_rank_iterator_kwargs (dict): Keyword arguments for the `RankIterator.__init__`, if any.
 
     """
-    def __init__(self, dataset, pdp_file, tw_width, tw_step, k, conf_tholds, z, test_size, cls_rank_iterator):
+    def __init__(self, dataset, pdp_file, tw_width, tw_step, k, conf_tholds, z, test_size, cls_rank_iterator, cls_rank_iterator_kwargs={}):
         """
 
         Args:
@@ -44,7 +44,8 @@ class ExpIntrptSettings:
             conf_tholds (List[float]): List of confidence threshold values [0., 1.]
             z (int): z factor of the efficiency measure used in the experiment
             test_size (float): (0., 1.) ratio of the time series dataset to be used as Test CB
-            cls_rank_iterator (str): Used RankIterator class's name
+            cls_rank_iterator (type): `RankIterator` sub-class used in the experiment
+            cls_rank_iterator_kwargs (dict): Keyword arguments for the `RankIterator.__init__`, if any.
 
         """
         self.dataset = dataset
@@ -56,6 +57,7 @@ class ExpIntrptSettings:
         self.z = z
         self.test_size = test_size
         self.cls_rank_iterator = cls_rank_iterator
+        self.cls_rank_iterator_kwargs = cls_rank_iterator_kwargs
 
 
 class ExpIntrptData:
@@ -146,7 +148,7 @@ class ExpIntrptOutput(exp_common.Output):
                 """
         if out_file is None:
             out_file = gen_intrpt_output_f_path(self.settings.dataset, self.settings.pdp_file, self.settings.tw_width, self.settings.tw_step,
-                                                self.settings.k, self.settings.test_size, self.settings.z, self.settings.conf_tholds)
+                                                self.settings.k, self.settings.conf_tholds, self.settings.z, self.settings.test_size, self.settings.cls_rank_iterator)
         common.dump_obj(self, out_file)
         logger.info("Anytime Lazy KNN - Interruption experiment output dumped into '{}'.".format(out_file))
         return out_file
@@ -155,7 +157,7 @@ class ExpIntrptOutput(exp_common.Output):
 class ExpIntrptEngine:
     """Interruption experiment engine"""
 
-    def __init__(self, pdp_file, cb, k, similarity, cls_rank_iterator, conf_tholds, z=-1, test_size=0.01):
+    def __init__(self, pdp_file, cb, k, similarity, conf_tholds, cls_rank_iterator=alk.TopDownIterator, cls_rank_iterator_kwargs={}, z=-1, test_size=0.01):
         """
 
         Args:
@@ -163,9 +165,9 @@ class ExpIntrptEngine:
             cb (cbr.TCaseBase):
             k (int): k of kNN.
             similarity (Callable): a normalized similarity measure that should return a `float` in [0., 1.]
-            cls_rank_iterator (type): The `RankIterator` *sub-class* of choice to find kNN candidates
-                within the `Rank` of the `Sequence`
             conf_tholds (List[float]): List of confidence threshold values [0., 1.]
+            cls_rank_iterator (type): `RankIterator` sub-class used in the experiment
+            cls_rank_iterator_kwargs (dict): Keyword arguments for the `RankIterator.__init__`, if any.
             z (int): factor of std deviations to be added or subtracted from the 'confidence'z in the 'efficiency' measure.
                 It provides a means of how prudent we want to be with the raw confidence value provided by PDP.
                 z=−1 would be a more cautious choice than the neutral z=0, and z=1 would be a more optimistic one.
@@ -176,8 +178,9 @@ class ExpIntrptEngine:
         self.cb = cb
         self.k = k
         self.similarity = similarity
+        self.conf_tholds = sorted(conf_tholds) if conf_tholds is not None else None  # sort in ascending order...
         self.cls_rank_iterator = cls_rank_iterator
-        self.conf_tholds= sorted(conf_tholds) if conf_tholds is not None else None  # sort in ascending order...
+        self.cls_rank_iterator_kwargs = cls_rank_iterator_kwargs
         self.z = z
         self.test_size = test_size
 
@@ -204,8 +207,11 @@ class ExpIntrptEngine:
         for idx, sequence in enumerate(CB_test):
             logger.info(".. Testing with problem sequence {} of {} (seq_id: {})".format(idx + 1, len_test, sequence.seq_id))
             # For every problem create two sequence solvers, one for uninterrupted, the other for the interrupted solving
-            uninterrupted_solver = exp_common.SolveSequence(CB_train, self.k, sequence, self.similarity, self.cls_rank_iterator)  # Note: 'exp_insights_raw' not provided
-            interrupted_solver = exp_common.SolveSequence(CB_train, self.k, sequence, self.similarity, self.cls_rank_iterator)
+            # instantiate the `RankIterator of choice with its given keyword arguments for both solvers
+            rank_iterator_unint = self.cls_rank_iterator(**self.cls_rank_iterator_kwargs)
+            rank_iterator_int = self.cls_rank_iterator(**self.cls_rank_iterator_kwargs)
+            uninterrupted_solver = exp_common.SolveSequence(CB_train, self.k, sequence, self.similarity, rank_iterator_unint)  # Note: 'exp_insights_raw' not provided
+            interrupted_solver = exp_common.SolveSequence(CB_train, self.k, sequence, self.similarity, rank_iterator_int)
             # Run tests for each update
             for stop_update in range(sequence.n_profiles()):
                 # Run uninterrupted_solver to stop at the end of the stop_update
@@ -267,7 +273,7 @@ def gen_intrpt_output_f_path(dataset, pdp_file, tw_width, tw_step, k, conf_thold
     q_step = pdp_output.settings.q_step
     pdp_dataset = exp_common.get_setting(pdp_output.settings.experiment, "dataset")
     pdp_dataset = common.file_name_wo_ext(pdp_dataset)
-    rank_iter_tag = run_common.get_rank_iter_option_key(cls_rank_iterator)
+    rank_iter_tag = cls_rank_iterator.abbrv
     z_tag = int(z) if int(z) == z else z
     conf_thold_tag = "[{}]".format("_".join([str(ct) for ct in conf_tholds])) if conf_tholds is not None else ""
     out_file = os.path.join(common.APP.FOLDER.RESULT,

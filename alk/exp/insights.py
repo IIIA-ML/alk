@@ -2,7 +2,7 @@
 
 import logging
 import os
-from typing import List, Union, Any  # For type hints
+from typing import List, Union, Any, Callable  # For type hints
 
 import numpy as np
 
@@ -321,11 +321,11 @@ class ExpInsightsSettings:
             k (int): k of kNN
             test_size (float): (0., 1.) ratio of the time series dataset to be used as Test CB
             cb_size (int): Number of cases in the Train CB
-            cls_rank_iterator (str): Used RankIterator class's name
-            cls_rank_iterator_attrs (dict): Used RankIterator class's class attributes, if any.
+            cls_rank_iterator (type): `RankIterator` sub-class used in the experiment
+            cls_rank_iterator_kwargs (dict): Keyword arguments for the `RankIterator.__init__`, if any.
 
     """
-    def __init__(self, dataset, tw_width, tw_step, k, test_size, cb_size, cls_rank_iterator, cls_rank_iterator_attrs):
+    def __init__(self, dataset, tw_width, tw_step, k, test_size, cb_size, cls_rank_iterator, cls_rank_iterator_kwargs={}):
         """
 
         Args:
@@ -337,8 +337,8 @@ class ExpInsightsSettings:
             k (int): k of kNN
             test_size (float): (0., 1.) ratio of the time series dataset to be used as Test CB
             cb_size (int): Number of cases in the Train CB
-            cls_rank_iterator (str): Used RankIterator class's name
-            cls_rank_iterator_attrs (dict): Used RankIterator class's class attributes, if any.
+            cls_rank_iterator (type): `RankIterator` sub-class used in the experiment
+            cls_rank_iterator_kwargs (dict): Keyword arguments for the `RankIterator.__init__`, if any.
 
         """
         self.dataset = dataset
@@ -348,7 +348,7 @@ class ExpInsightsSettings:
         self.test_size = test_size
         self.cb_size = cb_size
         self.cls_rank_iterator = cls_rank_iterator
-        self.cls_rank_iterator_attrs = cls_rank_iterator_attrs
+        self.cls_rank_iterator_kwargs = cls_rank_iterator_kwargs
 
 
 class ExpInsightsOutput(exp_common.Output):
@@ -379,7 +379,7 @@ class ExpInsightsOutput(exp_common.Output):
         """
         if out_file is None:
             out_file = gen_insights_ouput_f_path(self.settings.dataset, self.settings.tw_width, self.settings.tw_step,
-                                                 self.settings.test_size)
+                                                 self.settings.test_size, self.settings.cls_rank_iterator)
         common.dump_obj(self, out_file)
         logger.info("Anytime Lazy KNN - Insights experiment output dumped into '{}'.".format(out_file))
         return out_file
@@ -388,15 +388,15 @@ class ExpInsightsOutput(exp_common.Output):
 class ExpInsightsEngine:
     """Insights experiment engine"""
 
-    def __init__(self, cb, k, similarity, cls_rank_iterator, test_size=0.01, n_exp=1):
+    def __init__(self, cb, k, similarity, cls_rank_iterator=alk.TopDownIterator, cls_rank_iterator_kwargs={}, test_size=0.01, n_exp=1):
         """
 
         Args:
             cb (cbr.TCaseBase):
             k (int): k of kNN.
             similarity (Callable): a normalized similarity measure that should return a `float` in [0., 1.]
-            cls_rank_iterator (type): The `RankIterator` *sub-class* of choice to find kNN candidates
-                within the `Rank` of the `Sequence`
+            cls_rank_iterator (type): `RankIterator` sub-class used in the experiment
+            cls_rank_iterator_kwargs (dict): Keyword arguments for the `RankIterator.__init__`, if any.
             test_size (float): ratio of the number of test sequences to be separated from the `cb`.
             n_exp (int) = number of experiments to repeat
 
@@ -405,6 +405,7 @@ class ExpInsightsEngine:
         self.k = k
         self.similarity = similarity
         self.cls_rank_iterator = cls_rank_iterator
+        self.cls_rank_iterator_kwargs = cls_rank_iterator_kwargs
         self.test_size = test_size
         self.n_exp = n_exp
         self.all_exp_insights_raw = None  # type: List[ExpInsightsRaw]
@@ -428,7 +429,9 @@ class ExpInsightsEngine:
             for idx, sequence in enumerate(CB_test):
                 logger.info(".... Testing with problem sequence {} of {} (seq_id: {})".format(idx + 1, len_test, sequence.seq_id))
                 exp_insights_raw.add_new_sequence()  # Save insights of each sequence separately
-                solve_sequence = exp_common.SolveSequence(CB_train, self.k, sequence, self.similarity, self.cls_rank_iterator, exp_insights_raw)
+                # instantiate a new instance of the `RankIterator` of choice with its given keyword arguments
+                rank_iterator = self.cls_rank_iterator(**self.cls_rank_iterator_kwargs)
+                solve_sequence = exp_common.SolveSequence(CB_train, self.k, sequence, self.similarity, rank_iterator, exp_insights_raw)
                 solve_sequence.solve()  # All sequence updates w/o interruption and collect insights data
                 del solve_sequence  # Help garbage collector to release the memory as soon as possible
             self.all_exp_insights_raw.append(exp_insights_raw)
@@ -436,10 +439,11 @@ class ExpInsightsEngine:
         return processed_insights
 
 
-def gen_insights_ouput_f_path(dataset, tw_width, tw_step, k, test_size, key_cls_rank_iter, suffix=""):
+def gen_insights_ouput_f_path(dataset, tw_width, tw_step, k, test_size, cls_rank_iterator, suffix=""):
     """Returns full path of the output file for the insights experiment results"""
     dataset_name = os.path.splitext(os.path.basename(dataset))[0]  # Base file name w/o extension
+    rank_iter_tag = cls_rank_iterator.abbrv
     out_file = os.path.join(common.APP.FOLDER.RESULT,
-                               "INS_{d}_w_{w}_s_{s}_k_{k}_t_{t}_{i}{x}{e}".format(
-                                   d=dataset_name, w=tw_width, s=tw_step, k=k, t=str(test_size), i=key_cls_rank_iter, x=suffix, e=common.APP.FILE_EXT.PICKLE))
+                               "INS_{d}_w_{w}_s_{s}_k_{k}_t_{t}_r_{r}{x}{e}".format(
+                                   d=dataset_name, w=tw_width, s=tw_step, k=k, t=str(test_size), r=rank_iter_tag, x=suffix, e=common.APP.FILE_EXT.PICKLE))
     return out_file

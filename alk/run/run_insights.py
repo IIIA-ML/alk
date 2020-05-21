@@ -53,7 +53,7 @@ logger = logging.getLogger("ALK")
 
 
 def _create_exp_insights_engine(dataset, tw_width, tw_step, k, test_size, similarity=None,
-                                cls_rank_iterator=alk.TopDownIterator, n_exp=1, gen_profile=None):
+                                cls_rank_iterator=alk.TopDownIterator, cls_rank_iterator_kwargs={}, n_exp=1, gen_profile=None):
     """ Creates an insights experiment engine.
 
     Returns:
@@ -66,7 +66,8 @@ def _create_exp_insights_engine(dataset, tw_width, tw_step, k, test_size, simila
     max_val, min_val = ts.get_max_min(dataset)
     if similarity is None:
         similarity = lambda p1, p2: ts.euclidean_similarity_ts(p1, p2, max_=max_val, min_=min_val)
-    engine = insights.ExpInsightsEngine(cb=cb, k=k, similarity=similarity, cls_rank_iterator=cls_rank_iterator,
+    engine = insights.ExpInsightsEngine(cb=cb, k=k, similarity=similarity,
+                                        cls_rank_iterator=cls_rank_iterator, cls_rank_iterator_kwargs=cls_rank_iterator_kwargs,
                                         test_size=test_size, n_exp=n_exp)
     return engine
 
@@ -122,22 +123,21 @@ def main(argv=None):
     args = _parse_args(argv)
     dataset = os.path.expanduser(args.dataset)
     cls_rank_iterator = run_common.RANK_ITER_OPTIONS[args.iter]["cls"]
-    cls_rank_iterator.set_cls_attr(**args.kwargsiter)  # Set class attributes
-    # jump_at = args.jump
-    # jump_at_tag = "_jump_[{}]".format("_".join([str(j) for j in jump_at])) if jump_at is not None else ""
+    cls_rank_iterator_kwargs = args.kwargsiter
     # Generate file names
-    out_file = args.outfile if args.outfile else insights.gen_insights_ouput_f_path(dataset, args.width, args.step, args.k, args.testsize, args.iter)
+    out_file = args.outfile if args.outfile else insights.gen_insights_ouput_f_path(dataset, args.width, args.step, args.k, args.testsize, cls_rank_iterator)
     log_file = args.logfile if args.logfile else common.gen_log_file(out_file)
     # Set logger
     logger = common.initialize_logger(console_level=args.logc, output_dir=common.APP.FOLDER.LOG, log_file=log_file, file_level=args.logf)
     logger.info("Insights experiment script launched with args: {}".format(str(vars(args))))
     # create the experiment engine
-    engine = _create_exp_insights_engine(dataset, args.width, args.step, args.k, args.testsize, n_exp=args.runs, cls_rank_iterator=cls_rank_iterator)
+    engine = _create_exp_insights_engine(dataset, args.width, args.step, args.k, args.testsize, n_exp=args.runs,
+                                         cls_rank_iterator=cls_rank_iterator, cls_rank_iterator_kwargs=cls_rank_iterator_kwargs)
     # engine.run -> processed data
     processed_insights = engine.run()
     # create a result obj
     output = insights.ExpInsightsOutput(settings=insights.ExpInsightsSettings(dataset, args.width, args.step, args.k, args.testsize,
-                                                                              engine.cb.size(), cls_rank_iterator, args.kwargsiter),
+                                                                              engine.cb.size(), cls_rank_iterator, cls_rank_iterator_kwargs),
                                         data=processed_insights)
     logger.info("Insights experiment finished in {}.".format(datetime.timedelta(seconds=(time.time() - start_time))))
     # save the output

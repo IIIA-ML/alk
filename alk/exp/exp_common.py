@@ -33,10 +33,11 @@ class SolveSequence:
         sequence (Sequence): A problem sequence with multiple updates
         similarity (Callable): a normalized similarity measure that should return a `float` in [0., 1.]
         exp_insights (ExpInsightsRaw): Optional. If given; (gain, delta, knn_insights) data are appended.
-
+        anytime_lazy_knn (alk.AnytimeLazyKNN): `AnytimeLazyKNN` instance for the `sequence`.
+        start_update (int): The update index to resume from after interruption.
 
     """
-    def __init__(self, cb, k, sequence, similarity, cls_rank_iterator, exp_insights=None):
+    def __init__(self, cb, k, sequence, similarity, rank_iterator, exp_insights=None):
         """Initialize a SolveSequence object
 
         Args:
@@ -44,11 +45,9 @@ class SolveSequence:
             k (int): k of kNN
             sequence (cbr.Sequence): A problem sequence with multiple updates
             similarity (Callable): a normalized similarity measure that should return a `float` in [0., 1.]
-            cls_rank_iterator (type): The `RankIterator` *sub-class* of choice to find kNN candidates
+            rank_iterator (RankIterator): Instance of the `RankIterator` *sub-class* of choice to find kNN candidates
                 within the `Rank` of the `Sequence`
             exp_insights (ExpInsightsRaw): Optional. If given; (gain, delta, knn_insights) data are appended.
-            anytime_lazy_knn (alk.AnytimeLazyKNN): `AnytimeLazyKNN` instance for the `sequence`.
-            start_update (int): The update index to resume from after interruption.
 
         """
 
@@ -59,7 +58,7 @@ class SolveSequence:
         self.similarity = similarity
         self.exp_insights = exp_insights
         self.anytime_lazy_knn = alk.AnytimeLazyKNN(seq_id=sequence.seq_id, cb=cb, k=k, similarity=similarity,
-                                                   cls_rank_iterator=cls_rank_iterator)
+                                                   rank_iterator=rank_iterator)
         self.start_update = 0
 
     def solve(self, stop_update=None, stop_calc_at_stop_update=None):

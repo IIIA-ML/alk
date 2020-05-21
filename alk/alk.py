@@ -240,7 +240,7 @@ class Rank:
                 raise TypeError("Expected `Assessment` for `nn` item, got {}".format(type(item)))
         self.seq_id = seq_id
         self.stages = [initial_stage]
-        self.cur_stage = None  # TODO (OM, 20200420): rename -> _cur_stage ?
+        self.cur_stage = None
 
     def __getitem__(self, idx):
         """Provides list like behaviour to access `stages`, e.g. rank[0]
@@ -291,7 +291,8 @@ class Rank:
         if self.cur_stage is None:
             self.cur_stage = Stage(delta=delta)
         else:
-            raise RuntimeError("New stage already exists for a previous unterminated kNN search")
+            raise RuntimeError("New stage already exists for a previous unterminated kNN search. "
+                               "Call `Rank.knn_completed()` before, if the search is finished.")
 
     def add_assessment(self, assess, to_beat_idx=0, k=1):
         """Appends/inserts a neighbor to the stage for the ongoing kNN search (i.e. `cur_stage`).
@@ -410,28 +411,63 @@ class RankIterator:
             It should be set in the `__iter__` method.
 
     """
-    def __init__(self, rank, delta):
+
+    abbrv = "Not set"  # Abbreviation of the iterator; sub-classes are expected to overwrite it.
+
+    def __init__(self, rank=None):
         """Initialize a RankIterator object
 
         Args:
+            rank (Rank): Optional. `Rank` instance created for a particular sequence of cases
+
+        """
+        self.rank = None  # Although we'll call set_rank(), this line is for the sake of explicit definition of the instance attr inside __init__
+        self.set_rank(rank=rank)
+        self.nn_idx = 0
+        self.stage_idx = None
+        self._fback = None  # see `self.feedback` method
+
+    def set_rank(self, rank):
+        """Sets the `Rank` of the iterator, if it doesn't already have one.
+
+        Args:
             rank (Rank): `Rank` instance created for a particular sequence of cases
-            delta (float): distance(q^u-1, q^u)
 
         Raises:
             TypeError: If `rank`is not a `Rank` object
-            RuntimeError: If `rank` already has a `cur_stage`
+            RuntimeError:
+                i) The iterator object already has a `Rank` associated; OR
+                ii) If the `Rank` is currently being iterated OR
 
         """
-        if not isinstance(rank, Rank):
-            raise TypeError("Expected a `Rank` object for `rank`, got {}".format(type(rank)))
-        if rank.cur_stage is not None:
-            raise RuntimeError("{} cannot be instantiated with a Rank "
-                               "that has a current stage.".format(type(self).__name__))
+        if self.rank is not None:
+            raise RuntimeError("The iterator object already has a `Rank` associated.")
+        if rank is not None:
+            if not isinstance(rank, Rank):
+                raise TypeError("Expected a `Rank` object for `rank`, got {}".format(type(rank)))
+            if rank.is_being_iterated():
+                raise RuntimeError("{} cannot be instantiated with a `Rank`"
+                                   "that is currently being iterated.".format(type(self).__name__))
         self.rank = rank
+
+    def new_update(self):
+        """Resets the iterator for iteration for a new update.
+
+        Should be called by the `AnytimeLazyKNN._consecutive_search()`.
+
+        Returns:
+            None
+
+        Raises:
+            RuntimeError: If the `Rank` is currently being iterated.
+
+        """
+        if self.rank.is_being_iterated():
+            raise RuntimeError("Cannot reset iterator for a new update while the `Rank` is still being iterated. "
+                               "Call `Rank.knn_completed()` before, if the search is finished.")
         self.nn_idx = 0
         self.stage_idx = None
-        self.rank.create_new_stage(delta=delta)  # This is the only place where we create a new stage
-        self._fback = None  # see `self.feedback` method
+        self._fback = None
 
     def is_candidate(self, assess, stage_idx):
         """Check if a neighbor of a previous query update is a kNN candidate for the current update
@@ -469,28 +505,6 @@ class RankIterator:
         """
         pass
 
-    @classmethod
-    def set_cls_attr(cls, **kwargs):
-        """Sets public 'class' attributes
-
-        Used when a subclass has class attribute(s) that need(s) to be set before creating its instances.
-        Typical callees are the `run_~` experiment scripts which call this method with arguments passed from the command
-        line.
-
-        Given keyword arguments must match defined 'public' class attribute names.
-
-        Args:
-            **kwargs: key=value pairs for class attributes
-
-        Returns:
-            None:
-
-        Raises:
-            AttributeError: If a non-existing or private attribute is tried to be set.
-
-        """
-        common.set_public_attrs(cls, **kwargs)
-
     def __iter__(self):
         """Should be implemented by sub-classes.
 
@@ -505,6 +519,8 @@ class RankIterator:
 
 class TopDownIterator(RankIterator):
     """Yields candidates in a top-down fashion along the rank stages."""
+
+    abbrv = "td"  # Abbreviation of the iterator
 
     def __iter__(self):
         logger.debug(".......... {} TopDown RANK iteration for kNN[{}]".format(
@@ -532,9 +548,11 @@ class JumpingIterator(RankIterator):
 
     """
 
-    # `jump_at` class attribute has to be set by the callee via `set_cls_attr` class method
-    # And, it's advised to be used as read-only by class instances; if overwritten, this would shadow the class attr.
-    jump_at = None
+    abbrv = "j"  # Abbreviation of the iterator
+
+    def __init__(self, jump_at, **kwargs):
+        self.jump_at = jump_at
+        super().__init__(**kwargs)  # Invoke parent class init with the keyword argument dictionary
 
     def __iter__(self):
         logger.debug(".......... {} Jumping RANK iteration for kNN[{}] w/ jump_at: {}".format(
@@ -713,16 +731,15 @@ class AnytimeLazyKNN:
         k (int): k of kNN
         similarity (Callable): a normalized similarity measure that should return a `float` in [0., 1.]
         initial_nns (InitialSearch): `InitialSearch` implementation used for the initial problem of the sequence.
-        cls_rank_iterator (type): The `RankIterator` *sub-class* of choice to find kNN candidates
-                within the `Rank` of the `Sequence`
         _upd_knn_insights (KNNInsights): insights data of kNN assessments during the search for an update
         _query: The query for the last search call
         _rank (Rank):
-        _upd_rank_iter (RankIterator): `cls_rank_iterator` instance created once for each update
+        _rank_iterator (RankIterator): Instance of the `RankIterator` *sub-class* of choice to find kNN candidates
+                within the `Rank` of the `Sequence`
         _upd_calcs (int): Number of similarity calculations made during the kNN search for a particular update
 
     """
-    def __init__(self, seq_id, cb, k, similarity, cls_rank_iterator, initial_nns=LinearSearch):
+    def __init__(self, seq_id, cb, k, similarity, rank_iterator, initial_nns=LinearSearch):
         """Initialize an ALK object for a particular sequence.
 
         Args:
@@ -730,7 +747,7 @@ class AnytimeLazyKNN:
             cb (TCaseBase):
             k (int): k of kNN
             similarity (Callable): a normalized similarity measure that should return a `float` in [0., 1.]
-            cls_rank_iterator (type): The `RankIterator` *sub-class* of choice to find kNN candidates
+            rank_iterator (RankIterator): Instance of the `RankIterator` *sub-class* of choice to find kNN candidates
                 within the `Rank` of the `Sequence`
             initial_nns (InitialSearch): `InitialSearch` implementation used for the initial problem of the sequence.
 
@@ -740,16 +757,13 @@ class AnytimeLazyKNN:
         self.k = k
         self.initial_nns = initial_nns
         self.similarity = similarity
-        self.cls_rank_iterator = cls_rank_iterator
         self._upd_knn_insights = None  # holds insights info of the NN search for each kNN member for an update
         self._query = None
         self._rank = None
-        self._upd_start_nn_idx = 0  # The index of the iteration for the kNN[_upd_start_nn_idx] for an update
-        self._upd_rank_iter = None  # Will be reset for every sequence update
-        self._upd_start_nn_idx = 0  # The index of the kNN member
+        self._rank_iterator = rank_iterator
         self._upd_calcs = 0
         self._upd_delta = 0
-        self._upd_sorts = 0  # For debugging purposes sorts made for a particular update
+        self._upd_sorts = 0  # For debugging purposes, sorts made for a particular update
 
     def _distance(self, a, b):
         """Normalized distance: 1 - sim(a, b) -> [0, 1]"""
@@ -796,6 +810,8 @@ class AnytimeLazyKNN:
         self._upd_sorts += 1
         # Initialize the Rank for initial_knn_search this problem sequence
         self._rank = Rank(seq_id=self.seq_id, initial_stage=initial_stage)
+        # Set the `rank` of the iterator
+        self._rank_iterator.set_rank(rank=self._rank)
         self._upd_calcs = initial_calcs
         self._upd_knn_insights = KNNInsights(self.k)  # Create a new insights object for the initial problem
         # Add kNN[0] insights to _upd_knn_insights: use only kNN[0] for total_calcs in 0^th update.
@@ -819,11 +835,11 @@ class AnytimeLazyKNN:
             stop_calc (int): Optional interruption point given as the number of similarity calculations
 
         """
-        self._upd_start_nn_idx = 0
         self._upd_delta = self._distance(self._query, query)
         logger.debug("........ Sequence update {:d} (delta: {:.3f})".format(self._rank.n_cur_updates(), self._upd_delta))
+        self._rank_iterator.new_update()  # Reset the iterator for the new update
+        self._rank.create_new_stage(delta=self._upd_delta)  # This is the only place where we create a new stage
         self._query = query
-        self._upd_rank_iter = self.cls_rank_iterator(self._rank, self._upd_delta)  # One iterator instance per update
         self._upd_knn_insights = KNNInsights(self.k)  # Create a new insights object for each fresh update
         self._upd_sorts = 0
         self._upd_calcs = 0
@@ -851,14 +867,14 @@ class AnytimeLazyKNN:
 
         """
         signal_intrpt = common.APP.INTRPT.NONE
-        start_nn_idx = self._upd_rank_iter.nn_idx  # For resuming
-        logger.debug(".......... stage: {}, kNN[{}], calcs: {}, rank: {}".format(self._upd_rank_iter.stage_idx, start_nn_idx, self._upd_calcs, repr(self._rank)))
+        start_nn_idx = self._rank_iterator.nn_idx  # For resuming
+        logger.debug(".......... stage: {}, kNN[{}], calcs: {}, rank: {}".format(self._rank_iterator.stage_idx, start_nn_idx, self._upd_calcs, repr(self._rank)))
         # Iterate rank once for each kNN member
         for nn_idx in range(start_nn_idx, self.k):
             # logger.debug("............ knn_insights[{}]-> total: {}, calcs: {}".format(nn_idx, self._upd_knn_insights[nn_idx].total_calcs, self._upd_calcs))
             # Iterate through true candidates
             candidate = None
-            for candidate in self._upd_rank_iter:
+            for candidate in self._rank_iterator:
                 # Actual similarity calculation of the candidate to the query
                 candidate.sim = self.similarity(self._query, self.cb.get_case_query(candidate.case_id))
                 self._upd_calcs += 1
@@ -891,8 +907,8 @@ class AnytimeLazyKNN:
         # Is kNN search completed?
         if signal_intrpt == common.APP.INTRPT.NONE:
             self._rank.knn_completed()
-        if self._upd_rank_iter:
-            logger.debug(".......... stage: {}, kNN[{}], calcs: {}, sorts: {}, rank: {}".format(self._upd_rank_iter.stage_idx, self._upd_rank_iter.nn_idx, self._upd_calcs, self._upd_sorts, repr(self._rank)))
+        if self._rank_iterator:
+            logger.debug(".......... stage: {}, kNN[{}], calcs: {}, sorts: {}, rank: {}".format(self._rank_iterator.stage_idx, self._rank_iterator.nn_idx, self._upd_calcs, self._upd_sorts, repr(self._rank)))
         return self._rank.knn(k=self.k), signal_intrpt
 
     def _validate_upon_start(self, query, stop_calc):

@@ -43,7 +43,7 @@ logger = logging.getLogger("ALK")
 
 
 def _create_exp_intrpt_engine(dataset, pdp_file, tw_width, tw_step, k, conf_tholds, z, test_size, similarity=None,
-                              cls_rank_iterator=alk.TopDownIterator, gen_profile=None):
+                              cls_rank_iterator=alk.TopDownIterator, cls_rank_iterator_kwargs={}, gen_profile=None):
     """ Creates an interruption experiment engine.
 
     Returns:
@@ -56,8 +56,9 @@ def _create_exp_intrpt_engine(dataset, pdp_file, tw_width, tw_step, k, conf_thol
     max_val, min_val = ts.get_max_min(dataset)
     if similarity is None:
         similarity = lambda p1, p2: ts.euclidean_similarity_ts(p1, p2, max_=max_val, min_=min_val)
-    engine = intrpt.ExpIntrptEngine(pdp_file=pdp_file, cb=cb, k=k, similarity=similarity, cls_rank_iterator=cls_rank_iterator,
-                                    conf_tholds=conf_tholds, z=z, test_size=test_size)
+    engine = intrpt.ExpIntrptEngine(pdp_file=pdp_file, cb=cb, k=k, similarity=similarity, conf_tholds=conf_tholds,
+                                    cls_rank_iterator=cls_rank_iterator, cls_rank_iterator_kwargs=cls_rank_iterator_kwargs,
+                                    z=z, test_size=test_size)
     return engine
 
 
@@ -101,7 +102,7 @@ def main(argv=None):
     tw_width = exp_ins_settings.tw_width
     tw_step = exp_ins_settings.tw_step
     cls_rank_iterator = exp_ins_settings.cls_rank_iterator
-    cls_rank_iterator.set_cls_attr(**exp_ins_settings.cls_rank_iterator_attrs)   # Set class attributes. We do it like this because class attrs are not pickled.
+    cls_rank_iterator_kwargs = exp_ins_settings.cls_rank_iterator_kwargs
     # Generate file names
     out_file = args.outfile if args.outfile else intrpt.gen_intrpt_output_f_path(dataset, args.pdpfile, tw_width, tw_step, k, args.confthold, args.z, args.testsize, cls_rank_iterator)
     log_file = args.logfile if args.logfile else common.gen_log_file(out_file)
@@ -109,12 +110,13 @@ def main(argv=None):
     logger = common.initialize_logger(console_level=args.logc, output_dir=common.APP.FOLDER.LOG, log_file=log_file, file_level=args.logf)
     logger.info("Interruption experiment script launched with args: {}".format(str(vars(args))))
     # Create an interruption experiment engine
-    engine = _create_exp_intrpt_engine(dataset, args.pdpfile, tw_width, tw_step, k, args.confthold, args.z, args.testsize, cls_rank_iterator=cls_rank_iterator)
+    engine = _create_exp_intrpt_engine(dataset, args.pdpfile, tw_width, tw_step, k, args.confthold, args.z, args.testsize,
+                                       cls_rank_iterator=cls_rank_iterator, cls_rank_iterator_kwargs=cls_rank_iterator_kwargs)
     # engine.run -> collected data
     processed_data = engine.run()
     # create a result obj
-    output = intrpt.ExpIntrptOutput(settings=intrpt.ExpIntrptSettings(dataset, args.pdpfile, tw_width, tw_step, k, args.confthold,
-                                                                      args.z, args.testsize, cls_rank_iterator=cls_rank_iterator),
+    output = intrpt.ExpIntrptOutput(settings=intrpt.ExpIntrptSettings(dataset, args.pdpfile, tw_width, tw_step, k, args.confthold, args.z, args.testsize,
+                                                                      cls_rank_iterator=cls_rank_iterator, cls_rank_iterator_kwargs=cls_rank_iterator_kwargs),
                                     data=processed_data)
     logger.info("Interruption experiment finished in {}.".format(datetime.timedelta(seconds=(time.time() - start_time))))
     # save the output
