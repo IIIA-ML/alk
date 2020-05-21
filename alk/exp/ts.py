@@ -43,8 +43,8 @@ def read_ts(dataset):
 def euclidean_similarity_ts(a, b, max_, min_):
     """Euclidean similarity for two frames of univariate time series data
     Args:
-        a (numpy.ndarray): 1D array. frame 1
-        b (numpy.ndarray): 1D array. frame 2
+        a (np.ndarray): 1D array. frame 1
+        b (np.ndarray): 1D array. frame 2
         max_ (float): max value a slot can have
         min_ (float): min value a slot can have
     Returns:
@@ -100,6 +100,16 @@ def euclidean_similarity_ts(a, b, max_, min_):
     # normalized distance
     dist = np.linalg.norm(diff) / (np.sqrt(max(len_a, len_b)) * abs(max_ - min_))
     return 1. - dist if dist < 1. else 0.
+
+
+def euclidean_similarity_ts_dataset(dataset):
+    """Gives the custom euclidean_similarity_ts for a dataset
+
+    Returns:
+        Callable[[np.ndarray, np.ndarray], float]
+    """
+    max_val, min_val = get_max_min(dataset)
+    return lambda p1, p2: euclidean_similarity_ts(p1, p2, max_=max_val, min_=min_val)
 
 
 def gen_cb(dataset, gen_profile=None, tw_width=0, tw_step=1):
