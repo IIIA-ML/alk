@@ -45,6 +45,7 @@ import pandas as pd
 
 from alk import common, helper
 from alk.exp import intrpt
+from alk.run import run_common
 
 
 def _conf_col_label(conf, formatter, z=None):
@@ -54,11 +55,6 @@ def _conf_col_label(conf, formatter, z=None):
     #     lbl = "{}-{}$\sigma$={}".format(lbl, z if z > 1 else "")
     lbl = "{}".format(formatter(conf) if formatter else conf)
     return lbl
-
-
-def _time_window_width_str(w):
-    """String for the time window"""
-    return "Expanding" if w == 0 else w
 
 
 def main(argv=None):
@@ -133,7 +129,7 @@ def main(argv=None):
                     dataset_name = re.sub("{}$".format(tag), "", dataset_name)
             dataset_name = "\textit{{{0}}}".format(dataset_name)
             dict_avg_gains = {LBL_DATASET: dataset_name,
-                              LBL_FWIDTH: _time_window_width_str(exp_intrpt_output.settings.tw_width),
+                              LBL_FWIDTH: run_common.time_window_width_str(exp_intrpt_output.settings.tw_width),
                               LBL_FSTEP: exp_intrpt_output.settings.tw_step}
             avg_gain_keys = [_conf_col_label(c, float_formatter, exp_z) for c in df_avg_gains.index.tolist()]
             avg_gain_values = df_avg_gains["gain"].values

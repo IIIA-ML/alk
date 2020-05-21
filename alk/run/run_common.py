@@ -30,3 +30,7 @@ def get_rank_iter_option_key(cls_rank_iterator):
         raise KeyError("{} is not within the RankIterator options.".format(cls_rank_iterator.__class__.__name__))
     return k
 
+
+def time_window_width_str(w):
+    """String for the time window"""
+    return "Expanding" if w == 0 else w
