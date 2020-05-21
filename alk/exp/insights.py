@@ -314,15 +314,15 @@ class ExpInsightsSettings:
 
     Attributes:
         dataset (str): Full path of the dataset "arff" file
-            tw_width (int): if > 0, width of the 'moving' time window;
-                otherwise, 'expanding' time window approach is applied.
-            tw_step (int): number of steps (in terms of data points in TS) taken at each update.
-                This can also be seen as the number of data points changed at each update.
-            k (int): k of kNN
-            test_size (float): (0., 1.) ratio of the time series dataset to be used as Test CB
-            cb_size (int): Number of cases in the Train CB
-            cls_rank_iterator (type): `RankIterator` sub-class used in the experiment
-            cls_rank_iterator_kwargs (dict): Keyword arguments for the `RankIterator.__init__`, if any.
+        tw_width (int): if > 0, width of the 'moving' time window;
+            otherwise, 'expanding' time window approach is applied.
+        tw_step (int): number of steps (in terms of data points in TS) taken at each update.
+            This can also be seen as the number of data points changed at each update.
+        k (int): k of kNN
+        test_size (float): (0., 1.) ratio of the time series dataset to be used as Test CB
+        cb_size (int): Number of cases in the Train CB
+        cls_rank_iterator (type): `RankIterator` sub-class used in the experiment
+        cls_rank_iterator_kwargs (dict): Keyword arguments for the `RankIterator.__init__`, if any.
 
     """
     def __init__(self, dataset, tw_width, tw_step, k, test_size, cb_size, cls_rank_iterator, cls_rank_iterator_kwargs={}):
