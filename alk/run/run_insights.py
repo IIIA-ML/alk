@@ -125,7 +125,7 @@ def main(argv=None):
     cls_rank_iterator = run_common.RANK_ITER_OPTIONS[args.iter]["cls"]
     cls_rank_iterator_kwargs = args.kwargsiter
     # Generate file names
-    out_file = args.outfile if args.outfile else insights.gen_insights_ouput_f_path(dataset, args.width, args.step, args.k, args.testsize, cls_rank_iterator)
+    out_file = args.outfile if args.outfile else insights.gen_insights_output_f_path(dataset, args.width, args.step, args.k, args.testsize, cls_rank_iterator)
     log_file = args.logfile if args.logfile else common.gen_log_file(out_file)
     # Set logger
     logger = common.initialize_logger(console_level=args.logc, output_dir=common.APP.FOLDER.LOG, log_file=log_file, file_level=args.logf)

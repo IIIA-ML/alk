@@ -378,8 +378,8 @@ class ExpInsightsOutput(exp_common.Output):
 
         """
         if out_file is None:
-            out_file = gen_insights_ouput_f_path(self.settings.dataset, self.settings.tw_width, self.settings.tw_step,
-                                                 self.settings.test_size, self.settings.cls_rank_iterator)
+            out_file = gen_insights_output_f_path(self.settings.dataset, self.settings.tw_width, self.settings.tw_step,
+                                                  self.settings.test_size, self.settings.cls_rank_iterator)
         common.dump_obj(self, out_file)
         logger.info("Anytime Lazy KNN - Insights experiment output dumped into '{}'.".format(out_file))
         return out_file
@@ -439,7 +439,7 @@ class ExpInsightsEngine:
         return processed_insights
 
 
-def gen_insights_ouput_f_path(dataset, tw_width, tw_step, k, test_size, cls_rank_iterator, suffix=""):
+def gen_insights_output_f_path(dataset, tw_width, tw_step, k, test_size, cls_rank_iterator, suffix=""):
     """Returns full path of the output file for the insights experiment results"""
     dataset_name = os.path.splitext(os.path.basename(dataset))[0]  # Base file name w/o extension
     rank_iter_tag = cls_rank_iterator.abbrv
