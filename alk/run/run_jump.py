@@ -1,4 +1,36 @@
-"""Script to launch experiment with the `JumpingIterator` to collect gain data for various `jump_at` settings"""
+"""Script to launch experiment with the `JumpingIterator` to collect gain data for various `jump_at` settings
+
+usage: run_jump.py [-h] [-k K] [-t TESTSIZE] [-w WIDTH] [-s STEP] [-o OUTFILE]
+                   [-l LOGFILE] [-j JUMPS [JUMPS ...]] [--logc {DEBUG,INFO}]
+                   [--logf {DEBUG,INFO}]
+                   dataset
+
+positional arguments:
+  dataset               .arff file for time series dataset
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -k K, --k K           k of kNN (default: None)
+  -t TESTSIZE, --testsize TESTSIZE
+                        test size for the dataset (default: 0.01)
+  -w WIDTH, --width WIDTH
+                        frame width for cases as moving frames (default: 0)
+  -s STEP, --step STEP  Number of steps (in terms of data points in TS) taken
+                        by the window at each update (default: 1)
+  -o OUTFILE, --outfile OUTFILE
+                        File path for experiment results (default: None)
+  -l LOGFILE, --logfile LOGFILE
+                        Log file path (default: None)
+  -j JUMPS [JUMPS ...], --jumps JUMPS [JUMPS ...]
+                        jump_at values (default: None)
+  --logc {DEBUG,INFO}   console logger level (default: INFO)
+  --logf {DEBUG,INFO}   file logger level (default: INFO)
+
+Examples:
+    # Time window width=40, Time window step=1, test size= 1% of the dataset, jumps at: 5, 20, log level-> console: DEBUG, file: DEBUG
+    $ python -m alk.run.run_jump "~/Dev/alk/datasets/ItalyPowerDemand_TEST.arff" -k 3 -t 0.01 --width 40 --step 1 --jumps 5 20 --logc DEBUG --logf DEBUG
+
+"""
 import argparse
 import datetime
 import logging
@@ -49,7 +81,7 @@ def _parse_args(argv):
                         help="File path for experiment results")
     parser.add_argument("-l", "--logfile", type=str,
                         help="Log file path")
-    parser.add_argument("-j", "--jumps", nargs='+', type=float, default=None,
+    parser.add_argument("-j", "--jumps", nargs='+', type=int, default=None,
                         help="jump_at values")
     parser.add_argument("--logc", choices=["DEBUG", "INFO"], default="INFO",
                         help="console logger level")
@@ -68,7 +100,7 @@ def main(argv=None):
     dataset = os.path.expanduser(args.dataset)
     # Generate file names
     out_file = args.outfile if args.outfile else jump.gen_jump_output_f_path(dataset, args.width, args.step,
-                                                                             args.k, args.testsize, args.jum_at)
+                                                                             args.k, args.testsize, args.jumps)
     log_file = args.logfile if args.logfile else common.gen_log_file(out_file)
     # Set logger
     logger = common.initialize_logger(console_level=args.logc, output_dir=common.APP.FOLDER.LOG, log_file=log_file,
