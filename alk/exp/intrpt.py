@@ -6,7 +6,7 @@ import os
 
 import pandas as pd
 
-from alk import common, cbr, alk
+from alk import cbr, common, rank
 from alk.exp import pdp, exp_common
 
 
@@ -157,7 +157,7 @@ class ExpIntrptOutput(exp_common.Output):
 class ExpIntrptEngine:
     """Interruption experiment engine"""
 
-    def __init__(self, pdp_file, cb, k, similarity, conf_tholds, cls_rank_iterator=alk.TopDownIterator, cls_rank_iterator_kwargs={}, z=-1, test_size=0.01):
+    def __init__(self, pdp_file, cb, k, similarity, conf_tholds, cls_rank_iterator=rank.TopDownIterator, cls_rank_iterator_kwargs={}, z=-1, test_size=0.01):
         """
 
         Args:

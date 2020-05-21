@@ -46,7 +46,7 @@ import os
 import sys
 import time
 
-from alk import alk, common, helper
+from alk import common, helper, rank
 from alk.exp import ts, insights
 from alk.run import run_common
 
@@ -55,7 +55,7 @@ logger = logging.getLogger("ALK")
 
 
 def _create_exp_insights_engine(dataset, tw_width, tw_step, k, test_size, similarity=None,
-                                cls_rank_iterator=alk.TopDownIterator, cls_rank_iterator_kwargs={}, n_exp=1, gen_profile=None):
+                                cls_rank_iterator=rank.TopDownIterator, cls_rank_iterator_kwargs={}, n_exp=1, gen_profile=None):
     """ Creates an insights experiment engine.
 
     Returns:

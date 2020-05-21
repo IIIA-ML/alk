@@ -1,10 +1,11 @@
 """Library of common functionality for Anytime Lazy KNN scripts"""
 
-from alk import alk
+from alk import rank
 
-# To be used in script argument choices for the `alk.RankIterator` classes
-RANK_ITER_OPTIONS = {alk.TopDownIterator.abbrv: {"cls": alk.TopDownIterator, "help": "Top-down"},
-                     alk.JumpingIterator.abbrv: {"cls": alk.JumpingIterator, "help": "Jumping"}}
+
+# To be used in script argument choices for the `rank.RankIterator` classes
+RANK_ITER_OPTIONS = {rank.TopDownIterator.abbrv: {"cls": rank.TopDownIterator, "help": "Top-down"},
+                     rank.JumpingIterator.abbrv: {"cls": rank.JumpingIterator, "help": "Jumping"}}
 RANK_ITER_ARG_CHOICES = list(RANK_ITER_OPTIONS.keys())
 RANK_ITER_ARG_HELP = ", ".join(["{}: {}".format(c, RANK_ITER_OPTIONS[c]["help"]) for c in RANK_ITER_OPTIONS.keys()])
 
@@ -13,7 +14,7 @@ def get_rank_iter_option_key(cls_rank_iterator):
     """Gives the argument option for the given `RankIterator` class
 
     Args:
-        cls_rank_iterator (alk.RankIterator): sub-class
+        cls_rank_iterator (rank.RankIterator): sub-class
 
     Raises:
         KeyError: If the given class is not within the options.

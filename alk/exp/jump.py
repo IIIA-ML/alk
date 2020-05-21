@@ -6,7 +6,7 @@ from typing import List  # For type hints
 
 import pandas as pd
 
-from alk import alk, cbr, common
+from alk import cbr, common, rank
 from alk.exp import exp_common
 
 logger = logging.getLogger("ALK")
@@ -151,10 +151,10 @@ class ExpJumpEngine:
         for idx, sequence in enumerate(CB_test):
             logger.info(".. Testing with problem sequence {} of {} (seq_id: {})".format(idx + 1, len_test, sequence.seq_id))
             # For every problem create multiple sequence solvers, one for TopDown, others for Jumping Iterator
-            top_down_solver = exp_common.SolveSequence(CB_train, self.k, sequence, self.similarity, alk.TopDownIterator())  # Note: 'exp_insights_raw' not provided
+            top_down_solver = exp_common.SolveSequence(CB_train, self.k, sequence, self.similarity, rank.TopDownIterator())  # Note: 'exp_insights_raw' not provided
             jumping_solvers = {}
             for jump_at in self.jump_at_lst:
-                jumping_solvers[jump_at] = exp_common.SolveSequence(CB_train, self.k, sequence, self.similarity, alk.JumpingIterator(jump_at=jump_at))  # Note: 'exp_insights_raw' not provided
+                jumping_solvers[jump_at] = exp_common.SolveSequence(CB_train, self.k, sequence, self.similarity, rank.JumpingIterator(jump_at=jump_at))  # Note: 'exp_insights_raw' not provided
             # Run tests for each update
             for stop_update in range(sequence.n_profiles()):
                 # Run top_down_solver to stop at the end of the stop_update

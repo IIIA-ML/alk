@@ -6,7 +6,7 @@ from typing import List, Union, Any, Callable  # For type hints
 
 import numpy as np
 
-from alk import alk, common, helper, cbr
+from alk import alk, cbr, common, helper, rank
 from alk.exp import exp_common
 
 
@@ -388,7 +388,7 @@ class ExpInsightsOutput(exp_common.Output):
 class ExpInsightsEngine:
     """Insights experiment engine"""
 
-    def __init__(self, cb, k, similarity, cls_rank_iterator=alk.TopDownIterator, cls_rank_iterator_kwargs={}, test_size=0.01, n_exp=1):
+    def __init__(self, cb, k, similarity, cls_rank_iterator=rank.TopDownIterator, cls_rank_iterator_kwargs={}, test_size=0.01, n_exp=1):
         """
 
         Args:

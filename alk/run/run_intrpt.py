@@ -35,7 +35,7 @@ import os
 import sys
 import time
 
-from alk import alk, common
+from alk import common, rank
 from alk.exp import ts, pdp, intrpt
 
 
@@ -43,7 +43,7 @@ logger = logging.getLogger("ALK")
 
 
 def _create_exp_intrpt_engine(dataset, pdp_file, tw_width, tw_step, k, conf_tholds, z, test_size, similarity=None,
-                              cls_rank_iterator=alk.TopDownIterator, cls_rank_iterator_kwargs={}, gen_profile=None):
+                              cls_rank_iterator=rank.TopDownIterator, cls_rank_iterator_kwargs={}, gen_profile=None):
     """ Creates an interruption experiment engine.
 
     Returns:

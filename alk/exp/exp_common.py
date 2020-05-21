@@ -6,7 +6,7 @@ from typing import Tuple, List  # For type hints
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-from alk import alk, common
+from alk import alk, common, rank
 
 
 logger = logging.getLogger("ALK")
@@ -72,7 +72,7 @@ class SolveSequence:
                 if None, the knn search is not interrupted.
 
         Returns:
-            Tuple[List[alk.Assessment], common.APP.INTRPT, float]: (kNN, INTRPT, calc_pct)
+            Tuple[List[rank.Assessment], common.APP.INTRPT, float]: (kNN, INTRPT, calc_pct)
                 - kNN : best-so-far/exact kNNs of the `stop_update`;
                 - interruption flag, see `INTRPT` Enumeration;
                 - percentage of the total number of conducted similarity calculations with regard to
