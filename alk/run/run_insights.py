@@ -27,13 +27,15 @@ optional arguments:
                         td)
   --kwargsiter [KWARGSITER [KWARGSITER ...]]
                         keyword args entered in attribute=value format to set
-                        iterator class' class attributes (default: None)
+                        iterator class' init parameters (default: None)
   --logc {DEBUG,INFO}   console logger level (default: INFO)
   --logf {DEBUG,INFO}   file logger level (default: INFO)
 
 Examples:
-    # Time window width=40, Time window step=10, test size= 10% of the dataset, log level-> console: INFO, file: DEBUG
+    # Top Down Iterator, Time window width=40, Time window step=10, test size= 10% of the dataset, log level-> console: INFO, file: DEBUG
     $ python -m alk.run.run_insights "~/Dev/alk/datasets/SwedishLeaf_TEST.arff" -k 9 -t 0.1 --width 40 --step 10 --logc INFO --logf DEBUG
+    # Jumping Iterator w/ jump_at=5, Time window width=40, Time window step=10, test size= 10% of the dataset, log level-> console: INFO, file: DEBUG
+    $ python -m alk.run.run_insights "~/Dev/alk/datasets/SwedishLeaf_TEST.arff" -k 9 -t 0.1 --width 40 --step 10 --iter j --kwargsiter jump_at=5 --logc DEBUG --logf DEBUG
 
 """
 
@@ -96,7 +98,7 @@ def _parse_args(argv):
     parser.add_argument("--iter", choices=run_common.RANK_ITER_ARG_CHOICES, default=run_common.RANK_ITER_ARG_CHOICES[0],
                         help="Rank iteration -> " + run_common.RANK_ITER_ARG_HELP)
     parser.add_argument("--kwargsiter", nargs="*", type=str,
-                        help="keyword args entered in attribute=value format to set iterator class' class attributes")
+                        help="keyword args entered in attribute=value format to set iterator class' init parameters")
     parser.add_argument("--logc", choices=["DEBUG", "INFO"], default="INFO",
                         help="console logger level")
     parser.add_argument("--logf", choices=["DEBUG", "INFO"], default="INFO",
