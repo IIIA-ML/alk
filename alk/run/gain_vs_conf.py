@@ -1,6 +1,6 @@
-"""Script to export average gain upon interruption at confidence thresholds in a LaTeX table for multiple experiments.
+"""Script to export average gain upon interruption at confidence thresholds as a LaTeX table for multiple experiments.
 
- Average confidence efficiency for each experiment is also provided.
+Average confidence efficiency for each experiment is also provided.
 
 usage: gain_vs_conf.py [-h] [-p FPATH] [-c CONFTHOLD [CONFTHOLD ...]] [-z Z]
                        [-d DEC] [--knni KNNI] [--rtrim [RTRIM [RTRIM ...]]]
@@ -32,6 +32,8 @@ optional arguments:
 
 
 Examples
+    # First, copy all interruption experiment output files to ~/Desktop/results
+    # Export the LaTeX table for experiments that used z=-1 setting, use knni[8] for the average gain, trim _TRAIN _TEST tags from dataset names
     $ python -m alk.run.gain_vs_conf -p ~/Desktop/results -c 1. .98 .95 .92 .9 .85 .8 .75 .7 --knni 8 --z -1 --rtrim _TRAIN _TEST
 
  """
