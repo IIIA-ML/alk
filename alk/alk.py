@@ -373,12 +373,12 @@ class AnytimeLazyKNN:
             actual_sort = self._rank.cur_stage.sort()
             self._upd_sorts = self._upd_sorts + (1 if actual_sort else 0)
             # Update _upd_knn_insights for kNN[nn_idx]
-            self._upd_knn_insights[nn_idx].set(case_id=self._rank.cur_stage.nn[nn_idx].case_id,
-                                               actual_calcs=self._rank.cur_stage.nn[nn_idx].calcs_no,
-                                               found_stage_id=self._rank.cur_stage.nn[nn_idx].found_stage,
+            self._upd_knn_insights[nn_idx].set(case_id=self._rank.cur_stage[nn_idx].case_id,
+                                               actual_calcs=self._rank.cur_stage[nn_idx].calcs_no,
+                                               found_stage_id=self._rank.cur_stage[nn_idx].found_stage,
                                                last_calc_stage_id=candidate.found_stage if candidate else None)
             # Now calcs=total, add the calcs to the exact kNN[nn_idx]'s calcs_sim_history
-            self._upd_knn_insights[nn_idx].add_history(self._upd_calcs, self._rank.cur_stage.nn[nn_idx].sim)
+            self._upd_knn_insights[nn_idx].add_history(self._upd_calcs, self._rank.cur_stage[nn_idx].sim)
             if signal_intrpt == common.APP.INTRPT.W_CALC:
                 break  # INTERRUPT by calc
             logger.debug("............ knn_insights[{}]-> total: {}, calcs: {}, sorts: {}".format(nn_idx, self._upd_knn_insights[nn_idx].total_calcs, self._upd_calcs, self._upd_sorts))

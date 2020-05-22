@@ -172,9 +172,9 @@ class Rank:
         # TODO (OM, 20200417): Consider having Rank.k
         if not isinstance(initial_stage, Stage):
             raise TypeError("Expected `Stage` for `initial_stage`, got {}".format(type(initial_stage)))
-        elif not initial_stage.nn:
+        elif initial_stage.is_empty():
             raise ValueError("First stage of a `Rank` cannot be empty upon initialization.")
-        for item in initial_stage.nn:
+        for item in initial_stage:
             if not isinstance(item, Assessment):
                 raise TypeError("Expected `Assessment` for `nn` item, got {}".format(type(item)))
         self.seq_id = seq_id
