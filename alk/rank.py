@@ -82,12 +82,12 @@ class Stage:
             Assessment:
 
         Raises:
-            ValueError:
+            TypeError:  if `idx`is not an integer>=0 or a slice
 
         """
         if not (isinstance(idx, slice)
                 or (isinstance(idx, int) and idx >= 0)):
-            raise ValueError("{} is not a valid index".format(str(idx)))
+            raise TypeError("{} is not a valid index".format(str(idx)))
         return self.nn[idx]
 
     def __repr__(self):
@@ -194,10 +194,11 @@ class Rank:
             Stage:
 
         Raises:
-            ValueError:
+            TypeError: if `idx`is not an integer>=0
+
         """
         if not(isinstance(idx, int) and idx >= 0):
-            raise ValueError("{} is not a valid index >= 0".format(idx))
+            raise TypeError("{} is not a valid index >= 0".format(idx))
         return self.stages[idx]
 
     def __repr__(self):
