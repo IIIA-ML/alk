@@ -172,7 +172,7 @@ class KNNInsights(UserList):
 
     """
     def __init__(self, k, query_id=None):
-        """Initialize a KNNINsights object
+        """Initialize a KNNInsights object
 
         Args:
             k (int): k of kNN.
@@ -355,6 +355,7 @@ class AnytimeLazyKNN:
             for candidate in self._rank_iterator:
                 # Actual similarity calculation of the candidate to the query
                 candidate.sim = self.similarity(self._query, self.cb.get_case_query(candidate.case_id))
+                self._rank_iterator.feedback(candidate)  # Send the updated similarity as feedback
                 self._upd_calcs += 1
                 self._upd_knn_insights[nn_idx].total_calcs += 1
                 # Add the new assessment to Rank
