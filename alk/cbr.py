@@ -177,6 +177,10 @@ class CaseId:
         """For case_id_1 == case_id_2 comparison, and for !="""
         return self.seq_id == other.seq_id and self.upd_id == other.upd_id
 
+    def __hash__(self):
+        """___hash__ and __eq__ make `CaseId` hashable to be used as a key in a dict; general in all `Mapping` types"""
+        return hash((self.seq_id, self.upd_id))
+
 
 class TCaseBase(UserDict):
     """A simple temporal case-base.
