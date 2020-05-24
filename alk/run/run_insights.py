@@ -1,7 +1,8 @@
 """Script to launch experiment(s) to collect gain and knn insights data.
 
 usage: run_insights.py [-h] [-k K] [-t TESTSIZE] [-w WIDTH] [-s STEP]
-                       [-o OUTFILE] [-l LOGFILE] [--runs RUNS] [--iter {td,j}]
+                       [-o OUTFILE] [-l LOGFILE] [--runs RUNS]
+                       [--iter {td,j,xc}]
                        [--kwargsiter [KWARGSITER [KWARGSITER ...]]]
                        [--logc {DEBUG,INFO}] [--logf {DEBUG,INFO}]
                        dataset
@@ -23,8 +24,8 @@ optional arguments:
   -l LOGFILE, --logfile LOGFILE
                         Log file path (default: None)
   --runs RUNS           Number of experiment runs (default: 1)
-  --iter {td,j}         Rank iteration -> td: Top-down, j: Jumping (default:
-                        td)
+  --iter {td,j,xc}      Rank iteration -> td: Top-down, j: Jumping, xc:
+                        Exploit Candidates (default: td)
   --kwargsiter [KWARGSITER [KWARGSITER ...]]
                         keyword args entered in attribute=value format to set
                         iterator class' init parameters (default: None)
@@ -36,6 +37,8 @@ Examples:
     $ python -m alk.run.run_insights "~/Dev/alk/datasets/SwedishLeaf_TEST.arff" -k 9 -t 0.1 --width 40 --step 10 --logc INFO --logf DEBUG
     # Jumping Iterator w/ jump_at=5, Time window width=40, Time window step=10, test size= 10% of the dataset, log level-> console: INFO, file: DEBUG
     $ python -m alk.run.run_insights "~/Dev/alk/datasets/SwedishLeaf_TEST.arff" -k 9 -t 0.1 --width 40 --step 10 --iter j --kwargsiter jump_at=5 --logc DEBUG --logf DEBUG
+    # Exploit Candidates Iterator, Time window width=40, Time window step=10, test size= 10% of the dataset, log level-> console: INFO, file: DEBUG
+    $ python -m alk.run.run_insights "~/Dev/alk/datasets/SwedishLeaf_TEST.arff" -k 9 -t 0.1 --width 40 --step 10 --iter xc --logc INFO --logf DEBUG
 
 """
 
