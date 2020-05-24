@@ -5,7 +5,8 @@ from alk import rank
 
 # To be used in script argument choices for the `rank.RankIterator` classes
 RANK_ITER_OPTIONS = {rank.TopDownIterator.abbrv: {"cls": rank.TopDownIterator, "help": "Top-down"},
-                     rank.JumpingIterator.abbrv: {"cls": rank.JumpingIterator, "help": "Jumping"}}
+                     rank.JumpingIterator.abbrv: {"cls": rank.JumpingIterator, "help": "Jumping"},
+                     rank.ExploitCandidatesIterator.abbrv: {"cls": rank.ExploitCandidatesIterator, "help": "Exploit Candidates"}}
 RANK_ITER_ARG_CHOICES = list(RANK_ITER_OPTIONS.keys())
 RANK_ITER_ARG_HELP = ", ".join(["{}: {}".format(c, RANK_ITER_OPTIONS[c]["help"]) for c in RANK_ITER_OPTIONS.keys()])
 
