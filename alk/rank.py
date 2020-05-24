@@ -2,6 +2,11 @@
 
 import logging
 
+from collections import UserDict, namedtuple, UserList
+from typing import Dict, List, NamedTuple, Union
+
+from alk import cbr
+
 
 logger = logging.getLogger("ALK")
 
@@ -10,10 +15,10 @@ class Assessment:
     """Holds the assessment info for a neighbor of a query update.
 
     Attributes:
-        case (cbr.CaseId): (seq_id, upd_id)
+        case_id (cbr.CaseId): (seq_id, upd_id)
         sim (float): Similarity to the problem update related to the stage
         calcs_no (int): number of calcs made till this assessment (inclusive)
-        stage_id (int): the stage where this candidate was found
+        found_stage (int): İndex of the stage where this candidate was found
 
     """
 
@@ -23,7 +28,7 @@ class Assessment:
         """Initiate an Assessment object
 
         Args:
-            case (cbr.CaseId): (seq_id, upd_id)
+            case_id (cbr.CaseId): (seq_id, upd_id)
             sim (float): Similarity to the problem update related to the stage
             calcs_no (int): number of calcs made till this assessment (inclusive)
             found_stage (int): İndex of the stage where this candidate was found
@@ -32,7 +37,6 @@ class Assessment:
         self.case_id = case_id
         self.sim = sim
         # Below attributes are for statistical purposes
-        # TODO (OM, 20200417): Think on delegating the maintenance of this info to ALK
         self.calcs_no = calcs_no  # Set by ALK: How many calculations made until this case was assessed for this update
         self.found_stage = found_stage  # Set by RankIterator: In which stage this case was found as a candidate
 
@@ -79,10 +83,10 @@ class Stage:
             idx (int): index of the wanted `Assessment` within `nn`
 
         Returns:
-            Assessment:
+            Union[Assessment, List[Assessment]]:
 
         Raises:
-            TypeError:  if `idx`is not an integer>=0 or a slice
+            TypeError:  if `idx` is not an integer>=0 or a slice
 
         """
         if not (isinstance(idx, slice)
@@ -156,7 +160,7 @@ class Rank:
     """Holds the Rank of assessments made through out the updates of a particular query sequence.
 
     Attributes:
-        stages (`list` of `Stage`): Each `Stage` holds `Assessments` made for a particular sequence update
+        stages (List[Stage]): Each `Stage` holds `Assessments` made for a particular sequence update
         seq_id (int): id of the sequence of temporally related cases that this Rank object belongs to
         cur_stage (Stage): Holds assessments during all kNN[i] iterations for a query update;
             later added to the `stages`
@@ -194,11 +198,11 @@ class Rank:
             Stage:
 
         Raises:
-            TypeError: if `idx`is not an integer>=0
+            TypeError: if `idx` is not an integer
 
         """
-        if not(isinstance(idx, int) and idx >= 0):
-            raise TypeError("{} is not a valid index >= 0".format(idx))
+        if not(isinstance(idx, int)):  # and idx >= 0): in RankHash the stage index are -ive
+            raise TypeError("{} is not a valid index; only an integer index is accepted.".format(idx))
         return self.stages[idx]
 
     def __repr__(self):
@@ -338,6 +342,83 @@ class Rank:
             return self.stages[0][:k]
 
 
+class RankHash(UserDict):
+    """Serves as a hash table to locate an `Assessment` in the `Rank` by its `Assessment.case_id`
+
+    Used by rank iterators that needs to access assessments arbitrarily, e.g. `ExploitCandidatesIterator`.
+
+    Internally, it is a dictionary of `CaseId`=(stage_end_idx, assess_idx) key=value pairs where stage_end_idx is the
+    *reverse* index of the stage (i.e., -ive). This is for the sake of not having to update the hash when a new `Stage`
+    is added to the `Rank`.
+
+    Notes:
+        Hash maintenance method `popped_from_rank`, `new_stage_inserted` have to be called appropriately by the client
+        `RankIterator` subclass.
+
+    """
+
+    RankIndex = namedtuple("RankIndex", "stage_end_idx assess_idx")
+
+    def __init__(self, rank):
+        """
+
+        Args:
+            rank (Rank):
+        """
+        if not isinstance(rank, Rank):
+            raise TypeError("Expected a `Rank` object for `rank`, got {}".format(type(rank)))
+        if rank.is_being_iterated():
+            raise RuntimeError("{} cannot be instantiated with a `Rank`"
+                               "that is currently being iterated.".format(type(self).__name__))
+        self.data = {}  # type: Dict[cbr.CaseId, RankHash.RankIndex] # Intrinsic dict object of UserDict
+        self.rank = rank
+        self._gen_hash()
+
+    def _gen_stage_hash(self, stage_idx):
+        """Generates/updates the hash for the given `Stage` in `Rank`
+
+        Args:
+            stage_idx (int): >= 0 index of the stage, where 0 is the index of the stage for the last update.
+
+        Returns:
+            None
+
+        """
+        len_rank = len(self.rank)
+        for assess_idx, assess in enumerate(self.rank[stage_idx]):
+            self.data[assess.case_id] = RankHash.RankIndex(stage_idx - len_rank, assess_idx)
+
+    def _gen_hash(self):
+        """Generates the hash for the `self.rank`
+
+        Returns:
+            dict: A dictionary of CaseId=(stage_end_idx, assess_idx) key=value pairs for the rank
+
+        """
+        for stage_idx in range(len(self.rank)):
+            self._gen_stage_hash(stage_idx)
+
+    def popped_from_rank(self, case_id):
+        """Maintains the hash after `Rank.pop()` occurs.
+
+        It decreases the assess_idx values of the cases that are shifted up in position by 1.
+
+        Args:
+            case_id (cbr.CaseId): The `case_id` of the popped_from_rank `Assessment` from the `Rank`
+
+        """
+        popped = self.data[case_id]
+        self.data[case_id] = None  # This value is to be set later by the `new_stage_inserted` method
+        len_rank = len(self.rank)
+        for assess in self.rank[len_rank + popped.stage_end_idx][popped.assess_idx:]:
+            self.data[assess.case_id] = RankHash.RankIndex(self.data[assess.case_id].stage_end_idx,
+                                                           self.data[assess.case_id].assess_idx - 1)
+
+    def new_stage_inserted(self):
+        """Updates the hash after `RankIterator.new_update()` is called"""
+        self._gen_stage_hash(0)  # The new stage is always the 0^th stage in Rank
+
+
 class RankIterator:
     """Base class for rank iterators.
 
@@ -349,7 +430,6 @@ class RankIterator:
             Should be incremented by the RankIterator after each full rank iteration.
         stage_idx (int): Index of the stage currently being iterated in `Rank.stages`.
             It should be set in the `__iter__` method.
-
     """
 
     abbrv = "Not set"  # Abbreviation of the iterator; sub-classes are expected to overwrite it.
@@ -361,7 +441,7 @@ class RankIterator:
             rank (Rank): Optional. `Rank` instance created for a particular sequence of cases
 
         """
-        self.rank = None  # Although we'll call set_rank(), this line is for the sake of explicit definition of the instance attr inside __init__
+        self.rank = None  # type: Rank  # Although we'll call set_rank(), this line is for the sake of explicit definition of the instance attr inside __init__
         self.set_rank(rank=rank)
         self.nn_idx = 0
         self.stage_idx = None
@@ -422,6 +502,7 @@ class RankIterator:
             bool: True if that case is a kNN candidate for the current update; False otherwise.
 
         """
+        # TODO (OM, 20200524): Change the signature to (stage_idx, assess_idx)
         if self.rank.n_cur_assess() <= self.nn_idx:  # No one to beat yet in the cur_stage
             return True
         accum_delta = self.rank.cur_stage.delta
@@ -429,21 +510,21 @@ class RankIterator:
             accum_delta += self.rank.stages[j].delta
         return assess.sim + accum_delta >= self.rank.cur_stage[self.nn_idx].sim
 
-    def feedback(self, upd_assess, *args):
-        """Should be implemented by sub-classes that demands feedback for the choosing of the next candidate.
+    def feedback(self, candidate_assess):
+        """To be called by `AnytimeLazyKNN` after assessing the yielded candidate by the RankIterator.
 
-        Anytime Lazy KNN sends the *updated* Assessment of the yielded candidate
-        after calculating its distance to the current query update.
-        And, this function sets the internal `self._fback` attribute accordingly.
+        By default sets `self._fback` to `candidate_assess.sim`.
+
+        If another behaviour is wished, the method should be overridden accordingly by sub-classes
+        that demands feedback for the choosing of the next candidate.
 
         Args:
-            upd_assess (Assessment): Updated Assessment of the yielded candidate for the current query update.
-            *args: Any positional arguments that is used by the implementing class.
+            candidate_assess (Assessment): Updated Assessment of the yielded candidate for the current query update.
 
         Returns:
             None.
         """
-        pass
+        self._fback = candidate_assess.sim
 
     def __iter__(self):
         """Should be implemented by sub-classes.
@@ -466,12 +547,12 @@ class TopDownIterator(RankIterator):
         logger.debug(".......... {} TopDown RANK iteration for kNN[{}]".format(
             "*resuming*" if self.stage_idx is not None and self.rank.is_being_iterated() else "starting",
             self.nn_idx))
-        for self.stage_idx in range(len(self.rank)):  # Note! Uses instance attribute as the loop variable to update it.
-            # while stage_not_empty and (top_case_is_candidate or no_one_to_beat_yet)
+        len_rank = len(self.rank)
+        for self.stage_idx in range(len_rank):  # Note! Uses instance attribute as the loop variable to update it.
             while (not self.rank.is_stage_empty(self.stage_idx)
                    and self.is_candidate(self.rank[self.stage_idx][0], self.stage_idx)):
                 candidate = self.rank.pop(self.stage_idx, 0)  # Pop the top
-                candidate.found_stage = self.stage_idx
+                candidate.found_stage = len_rank - self.stage_idx - 1
                 yield candidate
         logger.debug("............ TopDown RANK iteration ended for kNN[{}]".format(self.nn_idx))
         # Iteration completed, set the index of the kNN member to beat at the next iteration
@@ -515,11 +596,11 @@ class JumpingIterator(RankIterator):
                 if ready_to_jump:
                     just_jumped = True
                     candidate = self.rank.pop(self.stage_idx + 1, 0)  # Pop the top from the next stage
-                    candidate.found_stage = self.stage_idx + 1
+                    candidate.found_stage = len_rank - self.stage_idx
                 else:
                     just_jumped = False
                     candidate = self.rank.pop(self.stage_idx, 0)  # Pop the top from the currently searched stage
-                    candidate.found_stage = self.stage_idx
+                    candidate.found_stage = len_rank - self.stage_idx - 1
                     candidates_in_stage_idx += 1
                 yield candidate
         logger.debug("............ Jumping RANK iteration ended for kNN[{}]".format(self.nn_idx))
@@ -527,3 +608,128 @@ class JumpingIterator(RankIterator):
         self.nn_idx += 1
         # Reset the iterated stage_idx
         self.stage_idx = None
+
+
+class ExploitCandidatesIterator(RankIterator):
+    """Exploits updates of approaching NNs that were yielded as candidates.
+
+    Formally:
+
+    If sim(s^i, q^{u}) > sim(s^i, q^{u-1}), then give priority to previous and later ​candidate​ updates of the sequence s
+
+    { s^j | candidate(s^j, q^{u}) ⋀ sim(s^j, q^{u}) >= sim(s^i, q^{u}), for all j in [a, b] } where
+
+    a, b are the indices of the first prior and posterior updates of s, respectively, that give lower similarity than
+    sim(s^i, q^{u}).
+
+    Attributes:
+        _rank_hash (dict): A `dict` of `(seq_id, upd_id): (stage_end_idx, assess_idx)` key/value pairs where stage_end_idx is the
+            reverse index of the stage (i.e., -ive). This for the sake of not having to maintain the hash when a new
+            Stage is added to the Rank.
+            The dict will be used as a hash table to access an assessment a in `self.rank` by its `a.case_id` as:
+
+            `self.rank.pop(self._rank_hash[a.case_id][0], self._rank_hash[a.case_id][1])`
+
+    """
+
+    abbrv = "xc"  # Abbreviation of the iterator
+
+    class ExploitBag(UserList):
+        """Container for the `cbr.CaseId`'s of the updates of an exploited candidate."""
+        def __init__(self, exploited=None):
+            """
+            Args:
+                exploited (Assessment): Exploited candidate where `exploited.sim` is its similarity to the current query update
+            """
+            self.exploited = exploited
+            self.data = []  # type: List[cbr.CaseId]
+
+    def __init__(self, rank=None):
+        self.rank = None  # type: Rank
+        self._rank_hash = None  # type: RankHash
+        self._exploit_bag = ExploitCandidatesIterator.ExploitBag()
+        super().__init__(rank)
+        if self.rank:
+            self._set_rank_hash()
+
+    def set_rank(self, rank):
+        super().set_rank(rank)
+        if self.rank:
+            self._set_rank_hash()
+
+    def _set_rank_hash(self):
+        """Creates the rank hash"""
+        self._rank_hash = RankHash(rank=self.rank)
+
+    def _get_adjacent_case_id(self, case_id, next_=True):
+        """Get's the case_id for the next sequence update in the Rank,
+
+        Args:
+            case_id (cbr.CaseId):
+            next_ (bool): If True, CaseId of the later sequence update is returned; otherwise; of the previous update.
+
+        Returns:
+            Union[cbr.CaseId, None]: None is returned if there is no update in the given direction.
+
+        """
+        adj_upd_id = case_id.upd_id + (1 if next_ else - 1)
+        if adj_upd_id < 0:
+            return None
+        adj_case_id = cbr.CaseId(case_id.seq_id, adj_upd_id)
+        if adj_case_id in self._rank_hash and self._rank_hash[adj_case_id]:  # It exists in the hash and it is not popped from rank
+            return adj_case_id
+        else:
+            return None
+
+    def __iter__(self):
+        logger.debug(".......... {} ExploitCandidates RANK iteration for kNN[{}]".format(
+            "*resuming*" if self.stage_idx is not None and self.rank.is_being_iterated() else "starting",
+            self.nn_idx))
+        len_rank = len(self.rank)
+        for self.stage_idx in range(len_rank):  # Note! Uses instance attribute as the loop variable to update it.
+            while (not self.rank.is_stage_empty(self.stage_idx)
+                   and self.is_candidate(self.rank[self.stage_idx][0], self.stage_idx)):
+                candidate = self.rank.pop(self.stage_idx, 0)  # Pop the top
+                self._rank_hash.popped_from_rank(candidate.case_id)  # Update rank hash
+                candidate.found_stage = len_rank - self.stage_idx - 1
+                candidate_sim = candidate.sim
+                yield candidate  # yield TOP DOWN
+                if self._fback > candidate_sim:  # The candidate is closer to this query update than it was to query's previous update
+                    # logger.debug("............ Exploiting candidate {}".format(candidate.case_id))
+                    # Exploit the candidate
+                    self._exploit_bag.exploited = Assessment(candidate.case_id, sim=self._fback)  # Create a tmp Assessment; do not trust the client has set the candidate.sim before calling `feedback()`
+                    # Add prev and next updates of the candidate to the exploit bag
+                    prev_case_id = self._get_adjacent_case_id(candidate.case_id, next_=False)
+                    if prev_case_id:
+                        self._exploit_bag.append(prev_case_id)
+                    next_case_id = self._get_adjacent_case_id(candidate.case_id, next_=True)
+                    if next_case_id:
+                        self._exploit_bag.append(next_case_id)
+                    while self._exploit_bag:
+                        update_case_id = self._exploit_bag.pop(0)
+                        update_stage_idx, update_assess_idx = self._rank_hash[update_case_id]
+                        if self.is_candidate(self.rank[update_stage_idx][update_assess_idx], update_stage_idx):
+                            candidate = self.rank.pop(update_stage_idx, update_assess_idx)  # Pop
+                            self._rank_hash.popped_from_rank(candidate.case_id)  # Update rank hash
+                            # logger.debug(".............. found a candidate update {}".format(candidate.case_id))
+                            yield candidate  # yield EXPLOITATION
+                            if self._fback > self._exploit_bag.exploited.sim:
+                                # logger.debug("................ exploited update {} has proved even closer.".format(candidate.case_id))
+                                logger.debug(".............. Exploited candidate w/ {}'s update w/ {} has proved even closer.".format(self._exploit_bag.exploited.case_id, candidate.case_id))
+                                # Add the adjacent update in the same direction of the assessed update to the exploit bag
+                                adj_case_id = self._get_adjacent_case_id(candidate.case_id,
+                                                                         next_=candidate.case_id.upd_id > self._exploit_bag.exploited.case_id.upd_id)
+                                if adj_case_id:
+                                    self._exploit_bag.append(adj_case_id)
+                    self._exploit_bag.exploited = None  # Leave the bag clean
+        logger.debug("............ ExploitCandidates RANK iteration ended for kNN[{}]".format(self.nn_idx))
+        # Iteration completed, set the index of the kNN member to beat at the next iteration
+        self.nn_idx += 1
+        # Reset the iterated stage_idx
+        self.stage_idx = None
+
+    def new_update(self):
+        super().new_update()
+        self._rank_hash.new_stage_inserted()  # Update rank hash for the newly inserted stage
+
+
