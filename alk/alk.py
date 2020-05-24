@@ -283,6 +283,7 @@ class AnytimeLazyKNN:
             query: The query for the initial problem of the sequence
 
         """
+        logger.debug("........ Sequence update 0 (Initial problem)")
         initial_stage, initial_calcs = self.initial_nns(self.cb, self.similarity).search(query)
         initial_stage.sort()  # Just in case, it won't sort if it is already sorted
         self._upd_sorts += 1
