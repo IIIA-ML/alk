@@ -707,10 +707,11 @@ class ExploitCandidatesIterator(RankIterator):
                         self._exploit_bag.append(next_case_id)
                     while self._exploit_bag:
                         update_case_id = self._exploit_bag.pop(0)
-                        update_stage_idx, update_assess_idx = self._rank_hash[update_case_id]
-                        if self.is_candidate(self.rank[update_stage_idx][update_assess_idx], update_stage_idx):
-                            candidate = self.rank.pop(update_stage_idx, update_assess_idx)  # Pop
+                        update_stage_end_idx, update_assess_idx = self._rank_hash[update_case_id]
+                        if self.is_candidate(self.rank[update_stage_end_idx][update_assess_idx], update_stage_end_idx):
+                            candidate = self.rank.pop(update_stage_end_idx, update_assess_idx)  # Pop
                             self._rank_hash.popped_from_rank(candidate.case_id)  # Update rank hash
+                            candidate.found_stage = len_rank + update_stage_end_idx
                             # logger.debug(".............. found a candidate update {}".format(candidate.case_id))
                             yield candidate  # yield EXPLOITATION
                             if self._fback > self._exploit_bag.exploited.sim:
