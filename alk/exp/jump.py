@@ -166,9 +166,9 @@ class ExpJumpEngine:
                 for jump_at in self.jump_at_lst:
                     logger.debug(
                         ".... JUMPING_solver w/ jump at {} launching for stop_update: {}".format(jump_at, stop_update))
-                    kNN_jumping, calc_pct_jumping, _ = jumping_solvers[jump_at].solve(stop_update=stop_update)
+                    kNN_jumping, _, calc_pct_jumping = jumping_solvers[jump_at].solve(stop_update=stop_update)
                     # Append to experiment data
-                    exp_jump_data.add(stop_update, 100. - calc_pct_top_down, jump_at)
+                    exp_jump_data.add(stop_update, 100. - calc_pct_jumping, jump_at)
             # Help garbage collector to release the memory as soon as possible
             del top_down_solver
             del jumping_solvers
