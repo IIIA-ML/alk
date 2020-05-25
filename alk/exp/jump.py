@@ -18,7 +18,7 @@ class ExpJumpData:
         self.data = []
 
     def add(self, update, gain, jump_at):
-        """Adds interruption experiment data for each interruption and/or termination.
+        """Adds experiment data.
 
         Args:
             update (int): the index of the sequence update
