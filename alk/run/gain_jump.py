@@ -4,15 +4,14 @@ usage: gain_jump.py [-h] [-p FPATH] [-d DEC] [--rtrim [RTRIM [RTRIM ...]]]
                     [experiments [experiments ...]]
 
 positional arguments:
-  experiments           Interruption experiment result file path(s) (default:
-                        None)
+  experiments           Jumping experiment result file path(s) (default: None)
 
 optional arguments:
   -h, --help            show this help message and exit
   -p FPATH, --fpath FPATH
-                        Full path of the folder containing interruption
-                        experiment result files. Optionally used instead of
-                        the 'experiments' argument. (default: None)
+                        Full path of the folder containing jumping experiment
+                        result files. Optionally used instead of the
+                        'experiments' argument. (default: None)
   -d DEC, --dec DEC     Decimal digits to be used in gain percentage (default:
                         2)
   --rtrim [RTRIM [RTRIM ...]]
@@ -43,9 +42,9 @@ def main(argv=None):
     # Configure argument parser
     parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument("experiments", nargs="*", type=str,
-                        help="Interruption experiment result file path(s)")
+                        help="Jumping experiment result file path(s)")
     parser.add_argument("-p", "--fpath", type=str,
-                        help="Full path of the folder containing interruption experiment result files. "
+                        help="Full path of the folder containing jumping experiment result files. "
                              "Optionally used instead of the 'experiments' argument.")
     parser.add_argument("-d", "--dec", type=int, default=2,
                         help="Decimal digits to be used in gain percentage")
