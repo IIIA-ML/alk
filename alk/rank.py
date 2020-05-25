@@ -695,7 +695,7 @@ class ExploitCandidatesIterator(RankIterator):
                 candidate_sim = candidate.sim
                 yield candidate  # yield TOP DOWN
                 if self._fback > candidate_sim:  # The candidate is closer to this query update than it was to query's previous update
-                    # logger.debug("............ Exploiting candidate {}".format(candidate.case_id))
+                    # logger.debug("............ Exploiting candidate w/ {}".format(candidate.case_id))
                     # Exploit the candidate
                     self._exploit_bag.exploited = Assessment(candidate.case_id, sim=self._fback)  # Create a tmp Assessment; do not trust the client has set the candidate.sim before calling `feedback()`
                     # Add prev and next updates of the candidate to the exploit bag
@@ -712,11 +712,10 @@ class ExploitCandidatesIterator(RankIterator):
                             candidate = self.rank.pop(update_stage_end_idx, update_assess_idx)  # Pop
                             self._rank_hash.popped_from_rank(candidate.case_id)  # Update rank hash
                             candidate.found_stage = len_rank + update_stage_end_idx
-                            # logger.debug(".............. found a candidate update {}".format(candidate.case_id))
+                            # logger.debug(".............. Exploited candidate w/ {}'s update w/ {} is also candidate.".format(self._exploit_bag.exploited.case_id, candidate.case_id))
                             yield candidate  # yield EXPLOITATION
                             if self._fback > self._exploit_bag.exploited.sim:
-                                # logger.debug("................ exploited update {} has proved even closer.".format(candidate.case_id))
-                                logger.debug(".............. Exploited candidate w/ {}'s update w/ {} has proved even closer.".format(self._exploit_bag.exploited.case_id, candidate.case_id))
+                                logger.debug("................ Exploited candidate w/ {}'s update w/ {} has proved even closer.".format(self._exploit_bag.exploited.case_id, candidate.case_id))
                                 # Add the adjacent update in the same direction of the assessed update to the exploit bag
                                 adj_case_id = self._get_adjacent_case_id(candidate.case_id,
                                                                          next_=candidate.case_id.upd_id > self._exploit_bag.exploited.case_id.upd_id)
