@@ -15,11 +15,10 @@ from alk.plot import plt_common
 
 
 def gains_multiple(experiments, file_format="pdf", marker_size=1, color_ind=None):
-    """Plots the gains for a list of lazy knn experiments.
+    """Plots the gains for a list of insights experiments.
 
     Args:
-        experiments (list): List of full paths to the `runTest.run_test`
-            experiment result file(s).
+        experiments (list): List of full paths to the `run.run_insights` experiment(s) result file(s).
 
     Returns:
         None
