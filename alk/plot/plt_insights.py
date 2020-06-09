@@ -14,7 +14,7 @@ from alk.exp import pdp
 from alk.plot import plt_common
 
 
-def gains_multiple(experiments, file_format="pdf", marker_size=1, color_ind=None):
+def gains_multiple(experiments, file_format="pdf", marker_size=1, color_ind=None, signature=True):
     """Plots the gains for a list of insights experiments.
 
     Args:
@@ -41,16 +41,19 @@ def gains_multiple(experiments, file_format="pdf", marker_size=1, color_ind=None
                         ci=None, line_kws={"label":"#{}: {}".format(exp_id, fn_wo_ext)},
                         color=COLORS_[exp_id] if len(experiments) > 1 or not color_ind else COLORS_[color_ind],  # color hack for presentations
                         truncate=True)
-        plt.ylim(np.min(dd['% Gain']), np.max(dd['% Gain']))
-        # plt.xlim(np.min(dd['Update']), np.max(dd['Update']))
+        plt.ylim(np.min(dd['% Gain']), 100.)  # np.max(dd['% Gain']))
+        g.set(ylabel="Gain (%)")
+        plt.xlim(np.min(dd['Update']), np.max(dd['Update']))
+        g.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
         # plt.xticks(range(np.min(dd['Update']), np.max(dd['Update']) + 1))
         if not save_fn:
             save_fn = 'GAINS_{}'.format(fn_wo_ext)
     save_fn = "{}{}{}".format(save_fn,
                               "_and_{}_more".format(len(experiments) - 1) if len(experiments) > 1 else "",
                               "_MARKERS" if marker_size else "")
-    plt_common.sign_plot(plt, gains_multiple.__name__)
-    plt.legend(title="Exp", frameon=True, loc="best", fontsize="small")
+    if signature:
+        plt_common.sign_plot(plt, gains_multiple.__name__)
+    plt.legend(title="Experiments", frameon=True, loc="best", fontsize="small")
     plt.title(title_ + "\n")
     plt.gcf().canvas.set_window_title(save_fn)
     if file_format:
