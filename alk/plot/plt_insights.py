@@ -52,6 +52,7 @@ def gains_multiple(experiments, file_format="pdf", marker_size=1., color_ind=Non
         plt.xlim(np.min(dd['Update']), np.max(dd['Update']))
         g.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
         # plt.xticks(range(np.min(dd['Update']), np.max(dd['Update']) + 1))
+        plt.gca().grid(True, linestyle="dashed", linewidth=0.4)
         if not save_fn:
             save_fn = 'GAINS_{}'.format(fn_wo_ext)
     save_fn = "{}{}{}".format(save_fn,
