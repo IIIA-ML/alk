@@ -14,11 +14,15 @@ from alk.exp import pdp
 from alk.plot import plt_common
 
 
-def gains_multiple(experiments, file_format="pdf", marker_size=1, color_ind=None, signature=True):
+def gains_multiple(experiments, file_format="pdf", marker_size=1., color_ind=None, with_title=True, signature=True):
     """Plots the gains for a list of insights experiments.
 
     Args:
         experiments (list): List of full paths to the `run.run_insights` experiment(s) result file(s).
+        file_format (str): One of the file extensions supported by the active backend.
+            Most backends support png, pdf, ps, eps and svg.
+        marker_size (float): size of the marker in scatter plot
+        color_ind (int): Index in the `sns.color_palette()` for plotting single experiment
 
     Returns:
         None
@@ -54,7 +58,8 @@ def gains_multiple(experiments, file_format="pdf", marker_size=1, color_ind=None
     if signature:
         plt_common.sign_plot(plt, gains_multiple.__name__)
     plt.legend(title="Experiments", frameon=True, loc="best", fontsize="small")
-    plt.title(title_ + "\n")
+    if with_title:
+        plt.title(title_ + "\n")
     plt.gcf().canvas.set_window_title(save_fn)
     if file_format:
         save_fpath = os.path.join(common.APP.FOLDER.FIGURE, "{}.{}".format(save_fn, file_format))
@@ -75,7 +80,7 @@ def quality_map(experiment, file_format=None, ki=None, urange=None, ustep=1,
     Plots all or ppi (calc, sim) points between each major tick interval
 
     Args:
-        experiment (str): run_test experiment results full file path
+        experiment (str): insights experiment results full file path
         file_format (str): One of the file extensions supported by the active backend.
             Most backends support png, pdf, ps, eps and svg.
             if is None, the plot is displayed and not saved.
