@@ -23,6 +23,8 @@ def gains_multiple(experiments, file_format="pdf", marker_size=1., color_ind=Non
             Most backends support png, pdf, ps, eps and svg.
         marker_size (float): size of the marker in scatter plot
         color_ind (int): Index in the `sns.color_palette()` for plotting single experiment
+        with_title (bool): if True, shows the figure title.
+        signature (bool): If True, name of the plotting function is also displayed.
 
     Returns:
         None
@@ -60,7 +62,6 @@ def gains_multiple(experiments, file_format="pdf", marker_size=1., color_ind=Non
     plt.legend(title="Experiments", frameon=True, loc="best", fontsize="small")
     if with_title:
         plt.title(title_ + "\n")
-    plt.gcf().canvas.set_window_title(save_fn)
     if file_format:
         save_fpath = os.path.join(common.APP.FOLDER.FIGURE, "{}.{}".format(save_fn, file_format))
         plt.savefig(save_fpath, dpi=300, bbox_inches="tight")
