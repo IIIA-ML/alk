@@ -223,8 +223,8 @@ This project is licensed under the GNU Affero General Public License v3.0 - see 
 
 ## References
 
-[1<a name="ref1"></a>] M.O. Mülâyim, J.L. Arcos, _Perks of Being Lazy: Boosting Retrieval Performance_, in: M.T. Cox, P. Funk, S. Begum (Eds.), International Conference on Case-Based Reasoning (ICCBR'18), Springer Verlag, 2018: pp. 309–322 [&#8921;](https://doi.org/10.1007/978-3-030-01081-2_21)
+[1<a name="ref1"></a>] M.O. Mülâyim, J.L. Arcos (2018), _Perks of Being Lazy: Boosting Retrieval Performance_, in: M.T. Cox, P. Funk, S. Begum (Eds.), International Conference on Case-Based Reasoning (ICCBR'18), Springer Verlag: pp. 309–322 [&#8921;](https://doi.org/10.1007/978-3-030-01081-2_21)
 
-[2<a name="ref2"></a>] M.O. Mülâyim, J.L. Arcos, _Fast Anytime Retrieval with Confidence in Large-Scale Temporal Case Bases_ (submitted)
+[2<a name="ref2"></a>] M.O. Mülâyim, J.L. Arcos (2020), _Fast Anytime Retrieval with Confidence in Large-Scale Temporal Case Bases_, Knowledge-Based Systems, 206, 106374 [&#8921;](https://doi.org/10.1016/j.knosys.2020.106374)
 
-[3<a name="ref3"></a>] Bagnall, A., Lines, J., Vickers, W., Keogh, E., _The UEA & UCR time series classification repository_ (Last accessed 20 January 2020) [&#8921;](http://www.timeseriesclassification.com)
+[3<a name="ref3"></a>] Bagnall, A., Lines, J., Vickers, W., Keogh, E., _The UEA & UCR Time Series Classification Repository_ (Last accessed 20 January 2020) [&#8921;](http://www.timeseriesclassification.com)
