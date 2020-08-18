@@ -422,7 +422,7 @@ class RankHash(UserDict):
 class RankIterator:
     """Base class for rank iterators.
 
-    A RankIterator instance must be re-initiated for every query update.
+    Only one `RankIterator instance should be initiated for each problem sequence.
 
     Attributes:
         rank (Rank): `Rank` instance created for a particular sequence of cases
