@@ -108,8 +108,8 @@ class SolveSequence:
             self.start_update = stop_update + 1  # NO Interruption: start from the next update
         else:
             self.start_update = stop_update  # Interruption: Next time, resume from the update where you had left
-        logger.debug("..... SolveSequence.solve() finished: start_update: {}, start_calc: {}, interrupted: {}.".format(
-            self.start_update, self.anytime_lazy_knn.get_upd_calcs(), is_interrupted))
+        logger.debug("..... {}.solve() finished: start_update: {}, start_calc: {}, interrupted: {}.".format(
+            self.__class__.__name__, self.start_update, self.anytime_lazy_knn.get_upd_calcs(), is_interrupted))
         return self.anytime_lazy_knn.get_knn(self.k), is_interrupted, total_calcs_pct
 
 
