@@ -29,12 +29,11 @@ Examples:
 import argparse
 import sys
 import os
-import re
 
 import pandas as pd
 
 from alk import common
-from alk.exp import jump
+from alk.exp import jump, ts
 from alk.run import run_common
 
 
@@ -85,11 +84,7 @@ def main(argv=None):
         dataset_name = common.file_name_wo_ext(exp_jump_output.settings.dataset)
         print("...Dataset: {}".format(dataset_name))
         if rtrim:
-            for tag in rtrim:
-                # Trim end tags
-                dataset_name = re.sub("{}$".format(tag), "", dataset_name)
-        dataset_name = "\textit{{{0}}}".format(dataset_name)
-
+            dataset_name = ts.rtrim_dataset_name(dataset_name, rtrim, latex_it=True)
         # Get the average gains in experiments
         exp_jump_data = exp_jump_output.data
         exp_jump_data = exp_jump_data.loc[exp_jump_data["update"] != 0]  # Filter the initial problem
