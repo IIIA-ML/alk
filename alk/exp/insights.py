@@ -447,3 +447,11 @@ def gen_insights_output_f_path(dataset, tw_width, tw_step, k, test_size, cls_ran
                                "INS_{d}_w_{w}_s_{s}_k_{k}_t_{t}_r_{r}{x}{e}".format(
                                    d=dataset_name, w=tw_width, s=tw_step, k=k, t=str(test_size), r=rank_iter_tag, x=suffix, e=common.APP.FILE_EXT.PICKLE))
     return out_file
+
+
+def get_avg_gain_for_exp(exp_file):
+    """Gives the average gain throughout the sequence updates in an insights experiment"""
+    # Load insights experiment
+    exp_insights_output = common.load_obj(exp_file)  # type: ExpInsightsOutput
+    exp_gains = exp_insights_output.data.gain
+    return np.mean([u[1] for u in exp_gains])
