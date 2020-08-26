@@ -327,7 +327,7 @@ def get_calcs_for_conf_tholds(pdp_file, update, conf_tholds, z=-1, knn_i=-1):
         knn_i (int): zero-based index of the KNN; provide -1 for the last kNN member
 
     Returns:
-        List[int]: list of calcs
+        List[int]: list of calcs sorted in ascending order
 
     """
     stop_calc_list = []
@@ -337,7 +337,7 @@ def get_calcs_for_conf_tholds(pdp_file, update, conf_tholds, z=-1, knn_i=-1):
                                                       conf_thold=thold,
                                                       z=z,
                                                       knn_i=knn_i))
-    return stop_calc_list
+    return sorted(stop_calc_list)
 
 
 def confidence_adjusted(conf, std=0., z=0.):
