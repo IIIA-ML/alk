@@ -2,6 +2,7 @@
 
 import logging
 import os
+import re
 
 import numpy as np
 from scipy.io import arff
@@ -155,3 +156,21 @@ def get_max_min(dataset):
     """
     TS, _ = read_ts(dataset)
     return np.nanmax(TS), np.nanmin(TS)
+
+
+def rtrim_dataset_name(dataset_name, rtrim, latex_it=False):
+    """Trims the labels at the end of time series dataset names.
+
+    Args:
+        rtrim (List[str]): List of labels, e.g. [_TRAIN, _TEST]
+        latex_it (bool): If True, the name is italicised for LaTeX
+
+    Returns:
+        string:
+    """
+    for tag in rtrim:
+        # Trim end tags
+        dataset_name = re.sub("{}$".format(tag), "", dataset_name)
+    if latex_it:
+        dataset_name = "\textit{{{0}}}".format(dataset_name)
+    return dataset_name
