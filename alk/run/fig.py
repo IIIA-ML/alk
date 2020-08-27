@@ -1,6 +1,6 @@
 """Script for Anytime Lazy KNN plots
 
-usage: fig.py [-h] [-p {g,qm,p,e}] [-f {pdf,png,ps,eps,svg}] [--dir DIR]
+usage: fig.py [-h] [-p {g,qm,i,p,e}] [-f {pdf,png,ps,eps,svg}] [--dir DIR]
               [--kwargs [KWARGS [KWARGS ...]]]
               experiments [experiments ...]
 
@@ -9,9 +9,10 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -p {g,qm,p,e}, --plot {g,qm,p,e}
-                        Plot type: g: gains, qm: quality map, p: PDP, e:
-                        confidence efficiency (default: g)
+  -p {g,qm,i,p,e}, --plot {g,qm,i,p,e}
+                        Plot type: g: gains, qm: quality map, i: calc
+                        insights, p: PDP, e: confidence efficiency (default:
+                        g)
   -f {pdf,png,ps,eps,svg}, --fileformat {pdf,png,ps,eps,svg}
                         File format for saving plots. If not supplied, plot is
                         not saved. (default: None)
@@ -23,6 +24,8 @@ optional arguments:
 Examples:
     # --- Gain ---
     $ python -m alk.run.fig ~/Dev/alk/results/INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1.pk -p g -f png --kwargs marker_size=0.5
+    # -- Calc Insights --
+    $ python -m alk.run.fig ~/Dev/alk/results/INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1.pk -p i -f png --kwargs total=True actual=True all_k=True all_ticks=False with_title=True signature=True marker_size=0
     # --- Quality Map ---
     # kNN[2], Update=10, save to PNG file, by filling in between calcs where kNN[2] has changed, culling 60% of data points
     $ python -m alk.run.fig ~/Dev/alk/results/INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1.pk -p qm --kwargs with_title=False signature=False colored=False urange="(10, 10)" ki=2 start_calc=3 ustep=1 fill=True q_full_scale=False cull=.6
@@ -48,6 +51,7 @@ from alk.plot import plt_insights, plt_pdp, plt_intrpt
 
 PLOT_FUNC_DICT = {"g": {"func": plt_insights.gains_multiple, "help": "gains"},
                   "qm": {"func": plt_insights.quality_map, "help": "quality map"},
+                  "i": {"func": plt_insights.insights_multiple, "help": "calc insights"},
                   "p": {"func": plt_pdp.pdp, "help": "PDP"},
                   "e": {"func": plt_intrpt.efficiency, "help": "confidence efficiency"}}
 

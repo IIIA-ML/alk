@@ -53,6 +53,7 @@ def gains_multiple(experiments, file_format="pdf", marker_size=1., color_ind=Non
         g.xaxis.set_major_locator(matplotlib.ticker.MaxNLocator(integer=True))
         # plt.xticks(range(np.min(dd['Update']), np.max(dd['Update']) + 1))
         plt.gca().grid(True, linestyle="dashed", linewidth=0.4)
+        plt.xlabel('Problem index')
         if not save_fn:
             save_fn = 'GAINS_{}'.format(fn_wo_ext)
     save_fn = "{}{}{}".format(save_fn,
@@ -67,6 +68,129 @@ def gains_multiple(experiments, file_format="pdf", marker_size=1., color_ind=Non
         save_fpath = os.path.join(common.APP.FOLDER.FIGURE, "{}.{}".format(save_fn, file_format))
         plt.savefig(save_fpath, dpi=300, bbox_inches="tight")
         print("Gains figure saved into '{}'.".format(save_fpath))
+    else:
+        # Update the title of the plot window
+        plt.gcf().canvas.set_window_title(save_fn)
+        plt.show()
+    plt.close()
+
+
+def insights_multiple(experiments, file_format="pdf", total=True, actual=True, all_k=False, marker_size=0,
+                      all_ticks=True, with_title=True, signature=True):
+    """Plots the total and actual calculations made to find kNNs for multiple experiments on the same figure.
+
+    Args:
+        experiments (list): List of full paths to the `run.run_insights` experiment(s) result file(s).
+        file_format (str): One of the file extensions supported by the active backend.
+            Most backends support png, pdf, ps, eps and svg.
+        total (bool): If True, plots the total number of calculations made for the ki's.
+        actual (bool): If True, plots the actual number of calculations made for the ki's.
+        all_k (bool): If False, plots all ki's in the first experiment and then plots
+            only the calcs for the kth NN for the experiments with index>=1;
+            otherwise, plots all ki's for all experiments. If there is only one
+            experiment to plot, this argument is ignored.
+        marker_size (float): size of the marker in scatter plot
+        all_ticks (bool): If True, all x-ticks are displayed.
+        with_title (bool): if True, shows the figure title.
+        signature (bool): If True, name of the plotting function is also displayed.
+
+    Returns:
+        None
+
+    """
+    LINE_STYLE = {0: "-", 1: "--", 2: "-.", 3: ":"}
+    COLORS_ = sns.color_palette()
+    LW = 1
+    experiments_k = []  # k's of the experiment for the output file name
+    from matplotlib.ticker import MaxNLocator
+    # Create a figure
+    plt.figure(num=1, figsize=(12, 10))
+    title_ = "Anytime Lazy KNN Search\nTotal vs Actual # of Similarity Assessments\n\n"
+    sns.set_style("whitegrid")
+    for exp_id, experiment in enumerate(experiments):
+        result = common.load_obj(experiment)
+        fn_wo_ext = common.file_name_wo_ext(experiment)
+        # Read experiment data
+        data = result.data
+        if total:
+            k_calcs_total = data.knn_total_cumsum
+            k = len(k_calcs_total[0]) - 1  # k of kNN
+        if actual:
+            k_calcs_actual = data.knn_actual_cumsum
+            if not total:
+                k = len(k_calcs_actual[0]) - 1  # k of kNN
+        experiments_k.append(str(k))
+        for i in range(k):
+            # If all_k is False, plot k_calcs of all ki's of the 1st experiment but only the 0^th and k'th of the other experiments.
+            if all_k or exp_id == 0 or i == (k - 1) or i == 0:
+                if total:
+                    # Total calculation number for each kNN
+                    dd = pd.DataFrame(np.array(k_calcs_total, dtype=int)[:, [0, i + 1]].tolist())
+                    dd.columns = ["Update", "Comps"]
+                    data = dd
+                    label_str = "kNN[{}] total".format(i) if len(experiments) == 1 else "kNN[{}] total (Exp #{})".format(i, exp_id)
+                    g = sns.regplot(x='Update', y='Comps', data=data,
+                                    scatter=True, fit_reg=True,
+                                    scatter_kws={"s": marker_size}, order=3, ci=None,  # ci=100,
+                                    color=COLORS_[i],
+                                    truncate=True,
+                                    line_kws={"linestyle": LINE_STYLE[exp_id % len(LINE_STYLE)],
+                                              "label": label_str,
+                                              "lw": LW})
+                    plt.legend(frameon=True, loc="best", fontsize="large")
+                if actual:
+                    # Actual calculation number for each kNN
+                    dd = pd.DataFrame(np.array(k_calcs_actual, dtype=int)[:, [0, i + 1]].tolist())
+                    dd.columns = ["Update", "Comps"]
+                    data = dd
+                    label_str = "kNN[{}] actual".format(i) if len(experiments) == 1 else "kNN[{}] actual (Exp #{})".format(i, exp_id)
+                    g = sns.regplot(x='Update', y='Comps', data=data,
+                                    scatter=True, fit_reg=True,
+                                    scatter_kws={"s": marker_size}, order=3, ci=None,  # ci=100,
+                                    marker="x",
+                                    color=COLORS_[i],
+                                    truncate=True,
+                                    line_kws={"linestyle": LINE_STYLE[(exp_id % len(LINE_STYLE)) + 1],  # Actual dashed
+                                              "label": label_str,
+                                              "lw": LW})
+                    plt.legend(frameon=True, loc="best", fontsize="large")
+        # Update the title
+        title_ = "{}{}Exp #{}: {}".format(title_, "\n" if exp_id > 0 else "", exp_id, fn_wo_ext)
+
+    #g.xaxis.set_major_locator(MaxNLocator(integer=True))
+    ax = plt.gca()
+    if all_ticks:
+        x_ticks_ = dd["Update"].unique()
+        ax.set_xticks(x_ticks_)
+    # if not all_ticks:
+    #     for ind, label in enumerate(g.get_xticklabels()):
+    #         if ind % (len(x_ticks_) % 10) == 0:  # only 10% of the ticks is shown
+    #             label.set_visible(True)
+    #         else:
+    #             label.set_visible(False)
+    ax.grid(True, linestyle="dashed", linewidth=0.4)
+    plt.xlabel("Problem index", fontsize="x-large")
+    plt.ylabel("Cumulative # of sim calculations for the i^th NN", fontsize="x-large")
+    #plt.rcParams['xtick.labelsize'] = "x-large"
+    #plt.rcParams['ytick.labelsize'] = "x-large"
+    ax.tick_params(axis='both', which='major', labelsize="large")
+    if signature:
+        plt.figtext(0.99, 0.01, 'rendered by \'insights_multiple\'.', horizontalalignment='right', alpha=0.5, size="small")
+    save_fn = '{}_{}{}{}-{}{}'.format(fn_wo_ext,
+                                            "+".join(experiments_k),
+                                            "-TOTAL" if total else "",
+                                            "-ACTUAL" if actual else "",
+                                            "ALL_K" if all_k or len(experiments) == 1 else "SELECT_K",
+                                            "-MARKERS" if marker_size else "")
+    # Udate the title of the plot window
+    plt.gcf().canvas.set_window_title(save_fn)
+    if with_title:
+        plt.title(title_ + "\n")
+    if file_format:
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        save_fpath = os.path.join(dir_path, "figures", "{}.{}".format(save_fn, file_format))
+        plt.savefig(save_fpath, dpi=300, bbox_inches="tight")
+        print("insights_multiple figure saved into '{}'.".format(save_fpath))
     else:
         # Update the title of the plot window
         plt.gcf().canvas.set_window_title(save_fn)
