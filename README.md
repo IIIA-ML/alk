@@ -17,7 +17,6 @@ Beside being an algorithm, _ALK_ also introduces a _methodology_ which may be ap
 _ALK Classifier_ is an extension to _ALK_ for its use as a kNN classifier. 
 _ALK Classifier_ also offers the option to interrupt the algorithm upon guaranteeing exact solution without the need to find all exact kNNs, when possible. 
 Thus, this option further speeds up kNN classification. 
-Details of _ALK Classifier_ is to be published in the dissertation.
 
 _ALK_ and _ALK Classifier_ are being developed as part of the authors' _PhD research_ at the _Artificial Intelligence Research Institute_, [IIIA-CSIC](https://iiia.csic.es/). 
 For further reading on _Anytime Lazy kNN_, please refer to the articles [[1](#ref1)] and [[2](#ref2)].
@@ -303,7 +302,6 @@ Example:
 ### Alternative Rank Iterations
 These are alternatives searches for candidates in the internal data structure `RANK`. 
 The default iteration style is _Top Down_ iteration of `Stage`s in `RANK`.
-Detailed information is to be published in the dissertation.
 
 #### Jumping
 After evaluating every _n^th_ candidate, this iteration makes a momentary jump to the next `Stage` in `RANK` for candidacy assessment.
