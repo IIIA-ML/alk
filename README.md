@@ -12,25 +12,41 @@ An instance in the problem space is evaluated only when it is deemed a candidate
 
 The algorithm is developed particularly for fast retrieval in _large-scale_ case bases where _temporally related cases_ form sequences.
 A typical example is a case base of health records of patients. Treatment sessions of a particular patient can be regarded as a sequence of temporally related cases.
-Beside being an algorithm, _ALK_ also introduces a _methodology_ which may be applied to exact and approximate kNN search in domains with similar problem space characteristics.  
+Beside being an algorithm, _ALK_ also introduces a _methodology_ which may be applied to exact and approximate kNN search in domains with similar problem space characteristics.
 
-_ALK_ is being developed as part of the authors' _PhD research_ at the _Artificial Intelligence Research Institute_, [IIIA-CSIC](https://iiia.csic.es/). 
+_ALK Classifier_ is an extension to _ALK_ for its use as a kNN classifier. 
+_ALK Classifier_ also offers the option to interrupt the algorithm upon guaranteeing exact solution without the need to find all exact kNNs, when possible. 
+Thus, this option further speeds up kNN classification. 
+Details of _ALK Classifier_ is to be published in the dissertation.
+
+_ALK_ and _ALK Classifier_ are being developed as part of the authors' _PhD research_ at the _Artificial Intelligence Research Institute_, [IIIA-CSIC](https://iiia.csic.es/). 
 For further reading on _Anytime Lazy kNN_, please refer to the articles [[1](#ref1)] and [[2](#ref2)].
 
 ## Table of Contents
 
 - [How to Use](#how-to-use)
-  * [Prerequisites](#prerequisites)
-  * [Quick Start](#quick-start)
+  - [Prerequisites](#prerequisites)
+  - [Quick Start](#quick-start)
 - [Demos](#demos)
-  * [Insights Experiments](#insights-experiments)
-    + [Plot Quality Map](#plot-quality-map)
-  * [Generate Performance Distribution Profile](#generate-performance-distribution-profile)
-    + [Plot PDP](#plot-pdp)
-    + [Export PDP as LaTeX](#export-pdp-as-latex)
-  * [Interruption Experiments](#interruption-experiments)
-    + [Plot Efficiency of Confidence](#plot-efficiency-of-confidence)
-    + [Export Gain & Efficiency Table](#export-gain-efficiency-table)
+  - [Insights Experiments](#insights-experiments)
+    - [Plot Gain](#plot-gain)
+    - [Plot Insights](#plot-insights)
+    - [Plot Quality Map](#plot-quality-map)
+    - [Export Gain Table](#export-gain-table)
+  - [Generate Performance Distribution Profile](#generate-performance-distribution-profile)
+    - [Plot PDP](#plot-pdp)
+    - [Export PDP as LaTeX](#export-pdp-as-latex)
+  - [Interruption Experiments](#interruption-experiments)
+    - [Plot Efficiency of Confidence](#plot-efficiency-of-confidence)
+    - [Export Gain & Efficiency Table](#export-gain-efficiency-table)
+  - [Classification Experiments](#classification-experiments)
+    - [Export Extended Gain & Efficiency Table](#export-extended-gain-efficiency-table)
+    - [Export Solution Hit Table](#export-solution-hit-table)
+  - [Alternative Rank Iterations](#alternative-rank-iterations)
+    - [Jumping](#jumping)
+      - [Export Jumping Gain](#export-jumping-gain)
+    - [Exploit Approaching Candidates](#exploit-approaching-candidates)
+      - [Export Exploiting Gain](#export-exploiting-gain)
 - [Authors](#authors)
 - [License](#license)
 - [References](#references)
@@ -75,9 +91,10 @@ A fully fledged experimentation with _Anytime Lazy KNN_ consists of three steps:
 Finally, calculate gain & efficiency of confidence of _ALK_ upon these interruptions.
  
 In following subsections, we provide the scripts to conduct these three steps. 
-The argument settings used in the example script executions below are the same settings that were used to generate the data and plots for the article [[2](#ref2)].
+The argument settings used in the example script executions below are the same settings that were used to generate the related data and plots for the article [[2](#ref2)].
 
 For demo purposes, _ALK_ uses local copies of the `arff`-formatted time series datasets that are publicly available in [[3](#ref3)].
+_Euclidean distance_ is used as a metric which is normalized taking into account the min and max values of the related dataset. 
 
 If not stated otherwise in script arguments, _ALK_ assumes that:
 
@@ -105,10 +122,33 @@ Example:
 - Use 10% of the dataset as test sequences to generate queries, and the rest as the case base
 - Set log levels -> console: `INFO`, file: `DEBUG`
 ```
-alk $ pwd
+(alk) alk $ pwd
 ~/Dev/alk
 (alk) alk $ python -m alk.run.run_insights "~/Dev/alk/datasets/SwedishLeaf_TEST.arff" -k 9 -t 0.1 --width 40 --step 10 --logc INFO --logf DEBUG
 ```
+
+#### Plot Gain
+Plot _ALK_'s gain throughout updates of test sequences
+
+Example:
+- Use the insights data of the [above](#insights-experiments) experiment
+- Save to PNG file  
+
+```
+python -m alk.run.fig ~/Dev/alk/results/INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1.pk -p g -f png 
+```
+
+#### Plot Insights
+Plot the _total_ and _actual_ similarity assessments made by _ALK_ to find kNNs
+
+Example:
+- Use the insights data of the [above](#insights-experiments) experiment
+- Save to PNG file  
+
+```
+python -m alk.run.fig ~/Dev/alk/results/INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1.pk -p i --kwargs total=True actual=True all_k=True all_ticks=False with_title=True signature=True marker_size=0
+```
+
 
 #### Plot Quality Map
 
@@ -119,6 +159,16 @@ Example:
 
 ```
 (alk) alk $ python -m alk.run.fig ~/Dev/alk/results/INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1.pk -p qm --kwargs with_title=False signature=False colored=False urange="(10, 10)" ki=2 start_calc=3 ustep=1 fill=True q_full_scale=False cull=.6
+```
+
+#### Export Gain Table
+This script generates the _Average Gain for Insights Experiments_ LaTeX table.
+
+Example:
+- Before running this script, copy the output files of the insights experiments that you want to report into a folder; in this example, `~/Desktop/results`.
+
+```
+(alk) alk $ python -m alk.run.gain_insights -p ~/Desktop/results --rtrim _TRAIN _TEST
 ```
 
 ### Generate Performance Distribution Profile
@@ -208,7 +258,94 @@ Example:
     * Export the average efficiency and its average standard deviation
 
 ```
-(alk) alk $ python -m alk.run.gain_vs_conf -p ~/Desktop/results -c 1. .98 .95 .92 .9 .85 .8 .75 .7 --knni 8 --z -1 --rtrim _TRAIN _TEST
+(alk) alk $ python -m alk.run.gain_intrpt_classify -p ~/Desktop/results -c 1. .98 .95 .92 .9 .85 .8 .75 .7 --knni 8 --z -1 --rtrim _TRAIN _TEST
+```
+
+### Classification Experiments
+This script is used to conduct experiments to collect gain, confidence efficiency and _solution hit_ data of _ALK Classifier_ 
+upon interruptions at confidence thresholds and/or upon guaranteeing exact solution with best-so-far kNNs.
+A solution hit upon interruption occurs when the solution suggested by best-so-far kNNs is equal to the solution with exact kNNs.
+
+Example:
+- Use `SwedishLeaf_TRAIN.arff` dataset
+- Use the PDP generated [above](#generate-performance-distribution-profile) for the `~_TEST` CB of the same dataset
+- Interrupt upon guaranteeing exact solution
+- Use _plurality_ vote for classification
+- Also interrupt at confidence thresholds `.98 .95 .92 .9 .85 .8 .75 .7` (in reverse order)
+- Set `z` factor in the efficiency measure to -1 for the standard deviation
+```
+(alk) alk $ python -m alk.run.run_classify ~/Dev/alk/datasets/SwedishLeaf_TRAIN.arff ~/Dev/alk/pdps/PDP_INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1__cs_0.0025_qs_0.05.pk -t 0.01 -c .98 .95 .92 .9 .85 .8 .75 .7 -z -1 --reuse p --wsoln 1 --logc DEBUG --logf DEBUG
+```
+
+#### Export Extended Gain & Efficiency Table
+This script generates the _Average Gain \% upon Interruption at Confidence Thresholds and with Exact Solutions_ LaTeX table.
+It extends the [above](#export-gain-efficiency-table) table with a column for the gain at interruption upon guaranteeing exact solution.
+
+Example:
+- Export the LaTeX table for the gains in classification experiments results at `~/Desktop/results`
+- For argument descriptions [see](#export-gain-efficiency-table)
+
+```
+(alk) alk $ python -m alk.run.gain_intrpt_classify -p ~/Desktop/results -c 1. .98 .95 .92 .9 .85 .8 .75 .7 --z -1 --clsfy 1 --rtrim _TRAIN _TEST
+```
+
+#### Export Solution Hit Table
+This script generates the _Average Solution Hit \%s_ LaTeX table.
+
+Example:
+- Use the same classification experiments results [above](#export-extended-gain-efficiency-table)
+- Also generate a column for the hit % at interruptions with exact solution (where all column values have to be 100%)
+
+```
+(alk) alk $ python -m alk.run.hit_intrpt -p ~/Desktop/results -c .98 .95 .92 .9 .85 .8 .75 .7 --z -1 --wsoln 1 --rtrim _TRAIN _TEST
+```
+
+### Alternative Rank Iterations
+These are alternatives searches for candidates in the internal data structure `RANK`. 
+The default iteration style is _Top Down_ iteration of `Stage`s in `RANK`.
+Detailed information is to be published in the dissertation.
+
+#### Jumping
+After evaluating every _n^th_ candidate, this iteration makes a momentary jump to the next `Stage` in `RANK` for candidacy assessment.
+
+Example:
+- Jump after: `[1, 2, 5, 10, 50]`
+
+```
+(alk) alk $ python -m alk.run.run_jump "~/Dev/alk/datasets/SwedishLeaf_TEST.arff.arff" -k 9 -t 0.1 --width 40 --step 1 --jumps 1, 2, 5, 10, 50 --logc INFO --logf DEBUG
+```
+
+##### Export Jumping Gain
+Exports the _Average Gain for TopDown vs Jumping Rank Iterations_ LaTeX table
+
+Example:
+- Use experiments results at `~/Desktop/results`
+
+```
+(alk) alk $ python -m alk.run.gain_jump -p ~/Desktop/results --rtrim _TRAIN _TEST
+```
+
+#### Exploit Approaching Candidates
+During the kNN search for a problem update _P^u_, if a candidate proves nearer to _P^u_ than it was to a predecessor problem _P^j (j < u)_, 
+this iteration exploits the predecessor and successor cases of that candidate to check if they get nearer to _P^u_ as well.
+A hash table is used to access the cases in `RANK`. The code is not yet optimized for the maintenance of the hash table in this prototype. 
+Use it at the peril of long execution times. 
+
+Example:
+- Use experiments results at `~/Desktop/results`
+
+```
+(alk) alk $ python -m alk.run.run_exploit "~/Dev/alk/datasets/SwedishLeaf_TEST.arff.arff" -k 9 -t 0.1 --width 40 --step 1 --logc INFO --logf DEBUG
+```
+
+##### Export Exploiting Gain
+Exports the _Average Gain for TopDown vs ExploitCandidates Rank Iterations_ LaTeX table
+
+Example:
+- Use experiments results at `~/Desktop/results`
+
+```
+(alk) alk $ python -m alk.run.gain_exploit -p ~/Desktop/results --rtrim _TRAIN _TEST
 ```
 
 ## Authors
@@ -227,4 +364,4 @@ This project is licensed under the GNU Affero General Public License v3.0 - see 
 
 [2<a name="ref2"></a>] M.O. Mülâyim, J.L. Arcos (2020), _Fast Anytime Retrieval with Confidence in Large-Scale Temporal Case Bases_, Knowledge-Based Systems, 206, 106374 [&#8921;](https://doi.org/10.1016/j.knosys.2020.106374)
 
-[3<a name="ref3"></a>] Bagnall, A., Lines, J., Vickers, W., Keogh, E., _The UEA & UCR Time Series Classification Repository_ (Last accessed 20 January 2020) [&#8921;](http://www.timeseriesclassification.com)
+[3<a name="ref3"></a>] A. Bagnall, J. Lines, W. Vickers, E. Keogh, _The UEA & UCR Time Series Classification Repository_ (Last accessed 20 January 2020) [&#8921;](http://www.timeseriesclassification.com)
