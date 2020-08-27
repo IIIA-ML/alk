@@ -24,6 +24,10 @@ optional arguments:
   --logf {DEBUG,INFO}   file logger level (default: INFO)
 
 Examples:
+    # Use SwedishLeaf_TRAIN.arff, use 1% of the dataset for test sequences
+    # Use PDP generated for the ~_TEST Cb of the same dataset
+    # Interrupt at confidence thresholds .98 .95 .92 .9 .85 .8 .75 .7 (in reverse order)
+    # Set z factor in the efficiency measure to -1 for the standard deviation
     $ python -m alk.run.run_intrpt ~/Dev/alk/datasets/SwedishLeaf_TRAIN.arff ~/Dev/alk/pdps/PDP_INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1__cs_0.0025_qs_0.05.pk -t 0.01 -c .98 .95 .92 .9 .85 .8 .75 .7 -z -1 --logc DEBUG --logf DEBUG
 
 """

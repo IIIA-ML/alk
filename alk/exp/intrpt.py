@@ -128,7 +128,7 @@ class ExpIntrptOutput(exp_common.Output):
 
         Args:
             settings (ExpIntrptSettings):
-            data (ExpIntrptData):
+            data (ExpIntrptData):  # TODO (OM, 20200825): Create new ExpIntrptProcessedData and refactor ExpIntrptData as ExpIntrptRawData
 
         """
         # super(ExpIntrptOutput, self).__init__(settings, data)  # commented to help IDE auto-fill below attributes
@@ -198,7 +198,7 @@ class ExpIntrptEngine:
         # Create an ExpIntrptData instance to save experiment data
         exp_intrpt_data = ExpIntrptData(z=self.z)
         if self.conf_tholds is not None:
-            conf_tholds = sorted(self.conf_tholds)  # sort just in case the arguments are not given in ascending order...
+            self.conf_tholds = sorted(self.conf_tholds)  # sort just in case the arguments are not given in ascending order...
         # Generate test problems
         CB_train, CB_test = exp_common.split_cb(self.cb, self.test_size)
         len_test = len(CB_test)
@@ -214,7 +214,8 @@ class ExpIntrptEngine:
             interrupted_solver = exp_common.SolveSequence(CB_train, self.k, sequence, self.similarity, rank_iterator_int)
             # Run tests for each update
             for stop_update in range(sequence.n_profiles()):
-                # Run uninterrupted_solver to stop at the end of the stop_update
+                # ------------------------------------------------------------------------------------------------------
+                # 1) Run uninterrupted_solver to stop at the end of the stop_update
                 logger.debug(".... UNINTERRUPTED_solver launching for stop_update: {}".format(stop_update))
                 kNN_uninterrupted, _, _ = uninterrupted_solver.solve(stop_update=stop_update)
                 # Set the stop_calc_list for testing
@@ -225,7 +226,8 @@ class ExpIntrptEngine:
                                                                    conf_tholds=self.conf_tholds, z=self.z, knn_i=-1)  # last kNN member, i.e. kNN[k-1]
                     stop_calc_list.append(None)  # Make sure you iterate whole RANK in the end.
                 logger.debug(".... stop_calc_list : {}".format(str(stop_calc_list)))
-                # Run interrupted_solver to stop at each stop_calc in the stop_update
+                # ------------------------------------------------------------------------------------------------------
+                # 2) Run interrupted_solver to stop at each stop_calc in the stop_update
                 interrupted = common.APP.INTRPT.W_CALC
                 for stop_calc_ind, stop_calc in enumerate(stop_calc_list):
                     # Run AnytimeLazyKNN to stop at the `stop_calc`^th calc of the `stop_update`^th update
@@ -258,7 +260,7 @@ class ExpIntrptEngine:
                         exp_intrpt_data.add(update=stop_update, calc=stop_calc, knn_i=knn_i, conf=conf, std_dev=std_dev,
                                             quality=quality_, gain=gain, sim=sim, thold=thold)
                         # Compare knn_unint_i and knn_int_i given the confidence
-                        _log_unint_int_comparison(conf, std_dev, stop_update, stop_calc, knn_i, knn_unint_i, knn_int_i, quality_, sim)
+                        log_unint_int_comparison(conf, std_dev, stop_update, stop_calc, knn_i, knn_unint_i, knn_int_i, quality_, sim)
             # Help garbage collector to release the memory as soon as possible
             del uninterrupted_solver
             del interrupted_solver
@@ -333,7 +335,7 @@ def get_avg_effcy_for_intrpt_exp(exp_file, knn_i=None):
     return data["effcyq"].mean(), data["effcyq"].std()  # μ & σ of all updates and stop calcs
 
 
-def _log_unint_int_comparison(conf, std_dev, stop_update, stop_calc, knn_i, knn_unint_i, knn_int_i, quality, sim, z=-3):
+def log_unint_int_comparison(conf, std_dev, stop_update, stop_calc, knn_i, knn_unint_i, knn_int_i, quality, sim, z=-3):
     """Helper function to check the exact and approximate kNNs regarding confidence upon interruption.
 
     Just generates warning log messages, if deemed necessary.

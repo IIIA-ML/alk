@@ -323,7 +323,7 @@ class Rank:
             self.stages.insert(0, self.cur_stage)
             self.cur_stage = None
 
-    def knn(self, k=1):
+    def knn(self, k=None):
         """Returns best-so-far/exact kNNs of the current/last sequence update.
 
         Note:
