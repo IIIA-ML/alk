@@ -5,7 +5,7 @@ import logging
 from collections import UserList
 from typing import List  # For type hints
 
-from alk import common, cbr, rank
+from alk import cbr, common, rank
 
 
 logger = logging.getLogger("ALK")
@@ -231,7 +231,7 @@ class AnytimeLazyKNN:
 
         """
         self.seq_id = seq_id
-        self.cb = cb
+        self.cb = cb  # type: cbr.TCaseBase
         self.k = k
         self.initial_nns = initial_nns
         self.similarity = similarity
@@ -409,7 +409,7 @@ class AnytimeLazyKNN:
         # TODO (OM, 20200419): Revise these validations, extend/reduce if needed
         if resuming and not (self._query is query):
             raise RuntimeError("Cannot continue with a new update. First, you need to resume the previously interrupted kNN search.")
-        if stop_calc is not None and stop_calc <= self._rank.n_cur_assess():
+        if stop_calc is not None and 0 < stop_calc <= self._rank.n_cur_assess():
             msg_error.append("interrupt: {} should be > # of already made evaluations: {}".format(stop_calc, self._rank.n_cur_assess()))
         if msg_error:
             logger.error(str(msg_error))

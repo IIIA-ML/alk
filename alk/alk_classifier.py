@@ -2,7 +2,7 @@
 import logging
 import sys
 from collections import Counter
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Type
 
 from alk import alk, common, rank
 
@@ -10,11 +10,16 @@ from alk import alk, common, rank
 logger = logging.getLogger("ALK")
 
 
+STOP_CALC_FOR_STOP_W_SOLN = -1  # `stop_calc` argument value for ALK Classifier for interruption at exact solution
+
+
 class BaseVote:
     """Base class for classification voting methods"""
 
+    abbrv = "Not set"  # Abbreviation of the voting method; sub-classes are expected to overwrite it.
+
     @classmethod
-    def _get_votes(cls, competitors, n=None, **kwargs):
+    def _get_votes(cls, competitors, n=None):
         """Makes the voting for the given exact/best-so-far competitor NNs
 
         Args:
@@ -41,7 +46,7 @@ class BaseVote:
             k (int): k of kNN
             competitors_exact (List[Tuple[Any, float]]): List of (class, sim) 2-tuples belonging to 'exact' nearest neighbors,
                         (!!! NOT best-so-far kNN !!!) Should be sorted descending with regards to sim values.
-            solution_set (list) :  list of all unique classes in the solutions pace
+            solution_set (set) :  set of all unique classes in the solutions pace
 
         Returns:
             bool: True, if exact solution is guaranteed; False, otherwise.
@@ -62,14 +67,14 @@ class BaseVote:
         else:  # len(top_two) == 1
             # Get the runner-up from available solutions in CB
             leading_class = top_two[0][0]
-            runner_up_class = (set(solution_set) - {leading_class}).pop()
+            runner_up_class = (solution_set - {leading_class}).pop()
         # similarity upper-bound set by the furthest exact NN
         sim_ub = competitors_exact[-1][1]
         imaginary_best_rival = (runner_up_class, sim_ub)
         # Clone the best rival for the supposed competitors with best rivals
         competitors_supposed = competitors_exact + [imaginary_best_rival] * (k - n_exact)
         # Check if the exact soln is guaranteed
-        return cls.reuse(competitors_exact) == cls.reuse(competitors_supposed)
+        return cls.vote(competitors_exact) == cls.vote(competitors_supposed)
 
     @classmethod
     def vote(cls, competitors):
@@ -87,6 +92,9 @@ class BaseVote:
 
 class Plurality(BaseVote):
     """Plurality (a.k.a. Relative Majority) vote among kNN which subsumes 'Simple Majority' vote"""
+
+    abbrv = "p"  # Abbreviation of the voting method
+
     # Implement base class' method
     @classmethod
     def _get_votes(cls, competitors, n=None):
@@ -99,6 +107,9 @@ class Plurality(BaseVote):
 
 
 class DistanceWeighted(BaseVote):
+    """Distance weighted voting among kNN; the closer to the query, the higher vote"""
+
+    abbrv = "w"  # Abbreviation of the voting method
 
     # Implement base class' method
     @classmethod
@@ -140,57 +151,62 @@ class BaseSolutionConfidence:
         raise NotImplementedError("Subclasses of `BaseSolutionConfidence` should implement the `get_confidence` method")
 
 
-class AnytimeLazyKNNClassifier(alk.AnytimeLazyKNN, confidence_soln=None):
+class AnytimeLazyKNNClassifier(alk.AnytimeLazyKNN):
     """Extends ALK to ALK Classifier to use for classification tasks
 
     An instance should be instantiated for each problem sequence.
 
     Attributes:
-        reuse (BaseVote): The classification method of choice,
-        confidence_soln (BaseSolutionConfidence)
+        reuse (Type[BaseVote]): The classification method of choice
 
     """
 
     def __init__(self, reuse, confidence_soln=None, **kwargs):
-        self.reuse = reuse  # type: BaseVote
+        self._reuse = reuse  # type: Type[BaseVote]
         self.confidence_soln = confidence_soln  # type: BaseSolutionConfidence
         super().__init__(**kwargs)  # Invoke `AnytimeLazyKNN` class init with the keyword argument dictionary
 
-    def _nn_to_soln_competitors(self):
+    def nn_to_soln_competitors(self, n):
         """Form a list of (solution, sim) 2-tuples for the top `n` nearest neighbors
 
         Args:
-            k (int): k of kNN, number of neighbors to be used in voting
+            n (int): number of neighbors to be used in voting
 
         Returns:
             List[Tuple[Any, float]]: list of (solution, sim) 2-tuples
 
         """
         competitors = []
-        knn = self.get_knn(k=self.k)
-        for assess in knn:
-            case_id = assess.case_id
-            soln = self.cb[case_id.seq_id].solution
+        nn = self.get_knn(k=n)
+        for assess in nn:
+            soln = self.cb.get_case_solution(assess.case_id)
             competitors.append((soln, assess.sim))
         return competitors
 
-    def suggest_solution(self):
+    def suggest_solution(self, confidence_soln=None):
         """Returns the  suggested solution for the best-so-far/exact kNNs and the confidence for this solution.
+
+        Args:
+            confidence_soln (BaseSolutionConfidence): Optional. Solution Confidence measure
 
         Returns:
             Tuple[Any, float]: The (solution, confidence) tuple.
         """
-        soln = self.reuse.vote(self._nn_to_soln_competitors())
-        conf = self.confidence_soln(self._rank.cur_stage.nn, self.k) if self.confidence_soln is not None else None
+        soln = self._reuse.vote(self.nn_to_soln_competitors(self.k))
+        if confidence_soln is not None:
+            nn = self.get_knn(k=None)  # get all evaluated NNs
+            conf = self.confidence_soln.get_confidence(nn, self.k)
+        else:
+            conf = None
         return soln, conf
 
-    def _lazy_core(self, stop_calc=None, stop_w_soln=None):
+    def _lazy_core(self, stop_calc=None):
         """Overrides parent's core method to extend it for classification purposes in ALK Classifier
 
         Args:
             stop_calc (int): Optional interruption point given as the number of similarity calculations
-            stop_w_soln (bool): if True, interrupts when best-so-far kNNs guarantee an exact solution;
-                otherwise, exact solution is not checked.
+                if `alk_classifier.STOP_CALC_FOR_STOP_W_SOLN` value is passed, the algorithm interrupts when best-so-far kNNs
+                guarantee an exact solution.
 
         Returns:
             (List[rank.Assessment], INTRPT):
@@ -238,13 +254,13 @@ class AnytimeLazyKNNClassifier(alk.AnytimeLazyKNN, confidence_soln=None):
                 break  # INTERRUPT by calc
             logger.debug("............ knn_insights[{}]-> total: {}, calcs: {}, sorts: {}".format(nn_idx, self._upd_knn_insights[nn_idx].total_calcs, self._upd_calcs, self._upd_sorts))
             # Check if exact solution can be achieved
-            if stop_w_soln and nn_idx < self.k - 1:  # nn_idx=self.k-1 -> The search has already terminated
+            if stop_calc == STOP_CALC_FOR_STOP_W_SOLN and nn_idx < self.k - 1:  # nn_idx=self.k-1 -> The search has already terminated
                 # Check if best so far kNNs can guarantee an exact solution
-                competitors_exact = self._nn_to_soln_competitors(self.get_knn(nn_idx + 1))  # Exact NNs and their sims
-                if self._reuse.is_exact_solution(k, competitors_exact, self.solution_set):
+                competitors_exact = self.nn_to_soln_competitors(nn_idx + 1)  # Exact NNs and their sims
+                if self._reuse.is_exact_solution(self.k, competitors_exact, self.cb.solution_set()):
                     logger.debug("............ breaking for * EXACT SOLUTION * at kNN[{}], calcs: {}, |cur_stage|: {}".format(nn_idx, self._upd_calcs, self._rank.n_cur_assess()))
                     logger.debug(".............. competitors were {}".format([(c[0], round(c[1], 3)) for c in  # class and sim
-                                                                               self._nn_to_soln_competitors(self.get_knn(nn_idx + 1))]))
+                                                                              self.nn_to_soln_competitors(nn_idx + 1)]))
                     signal_intrpt = common.APP.INTRPT.W_SOLN  # Raise the interruption flag for interruption w/ exact solution
                     break  # INTERRUPT by exact solution * * * *
         # Is kNN search completed?

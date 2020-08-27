@@ -3,6 +3,7 @@
 import logging
 import math
 from collections import UserDict
+from typing import Any, List
 
 import numpy as np
 
@@ -10,18 +11,20 @@ import numpy as np
 logger = logging.getLogger("ALK")
 
 
+# TODO(20200824): Create a generic `Case` class to be used as items of `Sequence._profiles`
+
 class Sequence:
     """The class to represent a sequence of temporally related cases
 
     Attributes:
         seq_id (int): sequence id
         _profiles (list): The list of cases  # TODO (OM, 20200501): Rename profile -> case
-
+        _profile_solutions (list): The solutions of cases
     """
-    def __init__(self, seq_id, profiles, solution=None):
+    def __init__(self, seq_id, profiles, solutions=None):
         self.seq_id = seq_id
         self._profiles = profiles
-        self.solution = solution
+        self._profiles_solutions = solutions  # type:List[Any] # The label/class for the sequence
 
     def n_profiles(self):
         """Number of profiles"""
@@ -34,12 +37,26 @@ class Sequence:
             idx (int): The index of the update throughout the history of the problem `Sequence`
 
         Returns:
-            iterable: A list of features defining the query (i.e.) part of the idx^th update
+            iterable: A list of features defining the query (i.e. problem) part of the idx^th update
 
         """
         if idx is None:
             idx = self.idx - 1
         return self._profiles[idx]
+
+    def profile_solution(self, idx=None):
+        """Returns the profile of the idx^th update.
+
+        Args:
+            idx (int): The index of the update throughout the history of the problem `Sequence`
+
+        Returns:
+            Any : The solution part of the idx^th update
+
+        """
+        if idx is None:
+            idx = self.idx - 1
+        return self._profiles_solutions[idx]
 
     def __repr__(self):
         return "{} (id:{}, |profiles|:{})".format(self.__class__.__name__, self.seq_id, self.n_profiles())
@@ -134,18 +151,19 @@ class TSSequence(Sequence):
                 This can also be seen as the number of data points changed in each update.
             gen_profile (Callable[[List[], int, int], List[numpy.ndarray]]): Function to generate problem profiles
                 and/or queries out of a data sequence. Its signature should be (data, tw_width, tw_step).
-            solution: solution/class of the sequence
+            solution (Any): The solution/label/class of the sequence
             seq_id (int): sequence id
 
         """
         self.seq_id = seq_id
-        self.solution = solution  # One solution/class for all profiles
         self.data = data  # THIS CORRESPONDS TO THE *** DATA SEQUENCE for the TIME SERIES ***  ITSELF.
         self.tw_width = tw_width
         self.tw_step = tw_step
         if gen_profile is None:
             gen_profile = TSSequence._gen_profile
         self._profiles = gen_profile(self.data, tw_width, tw_step)
+        self.solution = solution  # One solution/class for all profiles
+        self._profiles_solutions = [solution] * len(self._profiles)  # Clone the solution to all profiles for the parent class
 
 
 class CaseId:
@@ -220,26 +238,6 @@ class TCaseBase(UserDict):
     def __repr__(self):
         return "CB: {} sequences, total cases: {} ".format(self.__len__(), self.size())
 
-    def get_case_query(self, case_id):
-        """Get the query the given sequence update.
-
-        The query is essentially the problem part of the corresponding case.
-
-        Args:
-            case_id (CaseId): id of the sequence update that the case represents
-
-        Raises:
-            KeyError: The sequence `seq_id` does not match its key in the cb.
-
-        Returns:
-            numpy.ndarray: The array of feature values of the case.problem
-
-        """
-        sequence = self.data[case_id.seq_id]
-        if sequence.seq_id != case_id.seq_id:
-            raise KeyError("The sequence id {} does not match its index {} in the cb".format(sequence.seq_id, case_id.seq_id))
-        return sequence.profile(case_id.upd_id)
-
     def sequences(self):
         """Returns a list of all sequences in the CB.
 
@@ -257,4 +255,46 @@ class TCaseBase(UserDict):
         """
         solutions = [sequence.solution for sequence in self.sequences()]
         return set(sorted(solutions))
+
+    def get_case_query(self, case_id):
+        """Get the query for the given sequence update.
+
+        The query is essentially the problem part of the corresponding case.
+
+        Args:
+            case_id (CaseId): id of the sequence update that the case represents
+
+        Raises:
+            KeyError: The sequence `seq_id` does not match its key in the cb.
+
+        Returns:
+            numpy.ndarray: The array of feature values of the case.problem
+
+        """
+        sequence = self.data[case_id.seq_id]
+        if sequence.seq_id != case_id.seq_id:
+            raise KeyError(
+                "The sequence id {} does not match its index {} in the cb".format(sequence.seq_id, case_id.seq_id))
+        return sequence.profile(case_id.upd_id)
+
+    def get_case_solution(self, case_id):
+        """Get the solution of the given case.
+
+        The solutions of the corresponding cases for all sequence updates are essentially the same.
+
+        Args:
+            case_id (CaseId): id of the sequence update that the case represents
+
+        Raises:
+            KeyError: The sequence `seq_id` does not match its key in the cb.
+
+        Returns:
+            numpy.ndarray: The array of feature values of the case.problem
+
+        """
+        sequence = self.data[case_id.seq_id]
+        if sequence.seq_id != case_id.seq_id:
+            raise KeyError("The sequence id {} does not match its index {} in the cb".format(sequence.seq_id, case_id.seq_id))
+        return sequence.profile_solution(case_id.upd_id)
+
 
