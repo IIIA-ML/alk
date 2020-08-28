@@ -176,7 +176,7 @@ def insights_multiple(experiments, file_format="pdf", total=True, actual=True, a
     ax.tick_params(axis='both', which='major', labelsize="large")
     if signature:
         plt.figtext(0.99, 0.01, 'rendered by \'insights_multiple\'.', horizontalalignment='right', alpha=0.5, size="small")
-    save_fn = '{}_{}{}{}-{}{}'.format(fn_wo_ext,
+    save_fn = 'CALCS_{}_{}{}{}-{}{}'.format(fn_wo_ext,
                                             "+".join(experiments_k),
                                             "-TOTAL" if total else "",
                                             "-ACTUAL" if actual else "",
@@ -187,10 +187,9 @@ def insights_multiple(experiments, file_format="pdf", total=True, actual=True, a
     if with_title:
         plt.title(title_ + "\n")
     if file_format:
-        dir_path = os.path.dirname(os.path.realpath(__file__))
-        save_fpath = os.path.join(dir_path, "figures", "{}.{}".format(save_fn, file_format))
+        save_fpath = os.path.join(common.APP.FOLDER.FIGURE, "{}.{}".format(save_fn, file_format))
         plt.savefig(save_fpath, dpi=300, bbox_inches="tight")
-        print("insights_multiple figure saved into '{}'.".format(save_fpath))
+        print("Total vs Actual Calcs figure saved into '{}'.".format(save_fpath))
     else:
         # Update the title of the plot window
         plt.gcf().canvas.set_window_title(save_fn)
