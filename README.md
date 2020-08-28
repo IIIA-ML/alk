@@ -4,7 +4,7 @@ _Anytime Lazy kNN_ (_ALK_) is an anytime algorithm for fast kNN search.
 It finds _exact_ kNNs when allowed to run to completion with remarkable gain in execution time compared to a brute-force search.
 For applications where the gain in exact kNN search may not suffice,
 _ALK_ can be interrupted earlier and it returns _best-so-far_ kNNs together with a confidence value attached to each neighbor.
-Furthermore, it can automatically interrupt the search upon reaching a given confidence threshold and resume if so asked to.
+Furthermore, it can automatically interrupt the search upon reaching a given confidence threshold and resume if so asked.
 
 _ALK_ owes its speed to detecting and assessing only _true kNN candidates_ of the given _query_.
 Candidacy assessment is based on the triangle inequality in _metric spaces_.
@@ -73,7 +73,6 @@ $ conda activate alk
 ```
 
 Install required scientific libraries:
-
 ```
 (alk) $ conda install --file ~/Dev/alk/requirements.txt
 ```
@@ -90,8 +89,6 @@ A fully fledged experimentation with _Anytime Lazy KNN_ consists of three steps:
 Finally, calculate gain & efficiency of confidence of _ALK_ upon these interruptions.
  
 In following subsections, we provide the scripts to conduct these three steps. 
-The argument settings used in the example script executions below are the same settings that were used to generate the related data and plots for the article [[2](#ref2)].
-
 For demo purposes, _ALK_ uses local copies of the `arff`-formatted time series datasets that are publicly available in [[3](#ref3)].
 _Euclidean distance_ is used as a metric which is normalized taking into account the min and max values of the related dataset. 
 
@@ -103,8 +100,10 @@ If not stated otherwise in script arguments, _ALK_ assumes that:
 - Plotted figures and exported LaTeX tables are saved in `~/Dev/alk/figures`,
 - Log files are saved in `~/Dev/alk/logs`.
 
+For help on a script's command-line arguments, run the script with the `--help` option.
 Plots are saved only when a valid output file format is passed as an argument to the `alk.run.fig` script, e.g. `-f png`.
-If a file format is not given, the plot is displayed as a figure. For help on a script's command-line arguments, run the script with the `--help` option. 
+If a file format is not given, the plot is displayed as a figure. 
+Plot functions are highly parametric, see related function signature for further plotting options. 
 
 ### Insights Experiments
 
@@ -127,25 +126,25 @@ Example:
 ```
 
 #### Plot Gain
-Plot _ALK_'s gain throughout updates of test sequences
+Plot _ALK_'s gain throughout updates of test sequences.
 
 Example:
 - Use the insights data of the [above](#insights-experiments) experiment
 - Save to PNG file  
-
 ```
-python -m alk.run.fig ~/Dev/alk/results/INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1.pk -p g -f png 
+(alk) alk $ python -m alk.run.fig ~/Dev/alk/results/INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1_r_td.pk -p g -f png 
 ```
 
 #### Plot Insights
-Plot the _total_ and _actual_ similarity assessments made by _ALK_ to find kNNs
+Plot the _total_ and _actual_ similarity assessments made by _ALK_ to find kNNs. 
+_actual_ value for a kNN member is the number of similarity assessments after which it is actually found, 
+and _total_ value is the total number of assessments made to ascertain its exactness. 
 
 Example:
 - Use the insights data of the [above](#insights-experiments) experiment
 - Save to PNG file  
-
 ```
-python -m alk.run.fig ~/Dev/alk/results/INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1.pk -p i --kwargs total=True actual=True all_k=True all_ticks=False with_title=True signature=True marker_size=0
+(alk) alk $ python -m alk.run.fig ~/Dev/alk/results/INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1_r_td.pk -p i -f png --kwargs total=True actual=True all_k=True all_ticks=False with_title=True signature=True marker_size=0
 ```
 
 
@@ -155,17 +154,15 @@ Example:
 - Plot for kNN[2] (i.e. third top-most kNN member) and problem update=10
 - Filling in between calcs where kNN[2] has changed, culling 60% of data points
 - Save to PNG file
-
 ```
-(alk) alk $ python -m alk.run.fig ~/Dev/alk/results/INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1.pk -p qm --kwargs with_title=False signature=False colored=False urange="(10, 10)" ki=2 start_calc=3 ustep=1 fill=True q_full_scale=False cull=.6
+(alk) alk $ python -m alk.run.fig ~/Dev/alk/results/INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1_r_td.pk -p qm -f png --kwargs with_title=False signature=False colored=False urange="(10, 10)" ki=2 start_calc=3 ustep=1 fill=True q_full_scale=False cull=.6
 ```
 
 #### Export Gain Table
 This script generates the _Average Gain for Insights Experiments_ LaTeX table.
 
 Example:
-- Before running this script, copy the output files of the insights experiments that you want to report into a folder; in this example, `~/Desktop/results`.
-
+- Before running this script, copy the output files of the insights experiments that you want to report into a folder; in this example, `~/Desktop/results`
 ```
 (alk) alk $ python -m alk.run.gain_insights -p ~/Desktop/results --rtrim _TRAIN _TEST
 ```
@@ -181,10 +178,9 @@ Example:
 - Build the PDP of _ALK_ for the `SwedishLeaf_TEST` case base generated for the [above](#insights-experiments) experiment
 - Use the insights data in the experiment's output file
 - For the discretization of the quality and calculation ranges:
-    - Use `q_step`=0.05 and `calc_step`=0.0025 (i.e. 1/400 of the max. number of assessments encountered for a test sequence during the experiment)
-
+    - Use `q_step`=0.05 and `calc_step`=0.025 (i.e. 1/40 of the max. number of assessments encountered for a test sequence during the experiment)
 ```
-(alk) alk $ python -m alk.run.gen_pdp ~/Dev/alk/results/INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1.pk 0.0025 0.05 --logc DEBUG --logf DEBUG
+(alk) alk $ python -m alk.run.gen_pdp ~/Dev/alk/results/INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1_r_td.pk 0.025 0.05 --logc DEBUG --logf DEBUG
 ```
 
 #### Plot PDP
@@ -193,18 +189,18 @@ PDP is essentially a 4-dimensional array. We plot 2D excerpts.
 
 Example:
 - Plot PDP excerpt for kNN[2] and problem update=10
-
+- Plot quality range starting from 0.75 
+- Save to PDF
 ```
-(alk) alk $ python -m alk.run.fig ~/Dev/alk/pdps/PDP_INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1__cs_0.03_qs_0.025.pk -p p -f png --kwargs update=10 ki=2 to_latex=False decimals=3 start_q=.75
+(alk) alk $ python -m alk.run.fig ~/Dev/alk/pdps/PDP_INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1_r_td__cs_0.025_qs_0.05.pk -p p -f pdf --kwargs update=10 ki=2 to_latex=False decimals=3 start_q=.75
 ```
 
 #### Export PDP as LaTeX
 
 Example:
 - Export PDP excerpt for kNN[2] and problem update=10
-
 ```
-(alk) alk $ python -m alk.run.fig ~/Dev/alk/pdps/PDP_INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1__cs_0.03_qs_0.025.pk -p p --kwargs update=10 ki=2 to_latex=True decimals=3 start_q=.75
+(alk) alk $ python -m alk.run.fig ~/Dev/alk/pdps/PDP_INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1_r_td__cs_0.025_qs_0.05.pk -p p --kwargs update=10 ki=2 to_latex=True decimals=3 start_q=.75
 ```
 
 ### Interruption Experiments
@@ -229,7 +225,7 @@ Example:
 - Interrupt at confidence thresholds `.98 .95 .92 .9 .85 .8 .75 .7` (in reverse order)
 - Set `z` factor in the efficiency measure to -1 for the standard deviation
 ```
-(alk) alk $ python -m alk.run.run_intrpt ~/Dev/alk/datasets/SwedishLeaf_TRAIN.arff ~/Dev/alk/pdps/PDP_INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1__cs_0.0025_qs_0.05.pk -t 0.01 -c .98 .95 .92 .9 .85 .8 .75 .7 -z -1 --logc DEBUG --logf DEBUG
+(alk) alk $ python -m alk.run.run_intrpt ~/Dev/alk/datasets/SwedishLeaf_TRAIN.arff ~/Dev/alk/pdps/PDP_INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1_r_td__cs_0.025_qs_0.05.pk -t 0.01 -c .98 .95 .92 .9 .85 .8 .75 .7 -z -1 --logc INFO --logf DEBUG
 ```
 
 #### Plot Efficiency of Confidence
@@ -237,7 +233,7 @@ Example:
 Example:
 - Use the output of the [above](#interruption-experiments) interruption experiment
 ```
-(alk) alk $ python -m alk.run.fig "INT_SwedishLeaf_TRAIN_w_40_s_10_k_9_r_td_PDP_SwedishLeaf_TEST_c_0.0025_q_0.05__ct_[0.98_0.95_0.92_0.9_0.85_0.8_0.75_0.7]_z_-1_t_0.01.pk" -p e -f png --dir ~/Dev/alk/results/ --kwargs maximized=False with_title=True signature=True outliers=False aspect=.5
+(alk) alk $ python -m alk.run.fig "INT_SwedishLeaf_TRAIN_w_40_s_10_k_9_r_td_PDP_SwedishLeaf_TEST_c_0.025_q_0.05__ct_[0.98_0.95_0.92_0.9_0.85_0.8_0.75_0.7]_z_-1_t_0.01.pk" -p e -f png --dir ~/Dev/alk/results/ --kwargs maximized=False with_title=True signature=True outliers=False aspect=.5
 ```
 To plot more than one experiment with the same dataset but different time window settings, simply provide their result files in the first positional argument.
 
@@ -249,13 +245,11 @@ The average _efficiency_ of confidence is also given for each experiment.
 Before running this script, copy the output files of the interruption experiments that you want to report into a folder; in this example, `~/Desktop/results`.
 
 Example:
-
 - Read all interruption experiment output files at `~/Desktop/results`
 - Take into account only the experiments that used `z`=-1 setting, silently ignore others
 - For each experiment
-    * Export the average gain for the last kNN member (zero-based -> 8 for a `k`=9 setting)
-    * Export the average efficiency and its average standard deviation
-
+  - Export the average gain for the last kNN member (zero-based -> 8 for a `k`=9 setting)
+  - Export the average efficiency and its average standard deviation
 ```
 (alk) alk $ python -m alk.run.gain_intrpt_classify -p ~/Desktop/results -c 1. .98 .95 .92 .9 .85 .8 .75 .7 --knni 8 --z -1 --rtrim _TRAIN _TEST
 ```
@@ -273,17 +267,17 @@ Example:
 - Also interrupt at confidence thresholds `.98 .95 .92 .9 .85 .8 .75 .7` (in reverse order)
 - Set `z` factor in the efficiency measure to -1 for the standard deviation
 ```
-(alk) alk $ python -m alk.run.run_classify ~/Dev/alk/datasets/SwedishLeaf_TRAIN.arff ~/Dev/alk/pdps/PDP_INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1__cs_0.0025_qs_0.05.pk -t 0.01 -c .98 .95 .92 .9 .85 .8 .75 .7 -z -1 --reuse p --wsoln 1 --logc DEBUG --logf DEBUG
+(alk) alk $ python -m alk.run.run_classify ~/Dev/alk/datasets/SwedishLeaf_TRAIN.arff ~/Dev/alk/pdps/PDP_INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1_r_td__cs_0.025_qs_0.05.pk -t 0.01 -c .98 .95 .92 .9 .85 .8 .75 .7 -z -1 --reuse p --wsoln 1 --logc INFO --logf DEBUG
 ```
+To use _distance-weighted_ vote, pass 'w' value to the `reuse` argument.
 
 #### Export Extended Gain & Efficiency Table
 This script generates the _Average Gain \% upon Interruption at Confidence Thresholds and with Exact Solutions_ LaTeX table.
 It extends the [above](#export-gain-efficiency-table) table with a column for the gain at interruption upon guaranteeing exact solution.
 
 Example:
-- Export the LaTeX table for the gains in classification experiments results at `~/Desktop/results`
+- Export the LaTeX table for the gains in classification experiment results at `~/Desktop/results`
 - For argument descriptions [see](#export-gain-efficiency-table)
-
 ```
 (alk) alk $ python -m alk.run.gain_intrpt_classify -p ~/Desktop/results -c 1. .98 .95 .92 .9 .85 .8 .75 .7 --z -1 --clsfy 1 --rtrim _TRAIN _TEST
 ```
@@ -292,33 +286,30 @@ Example:
 This script generates the _Average Solution Hit \%s_ LaTeX table.
 
 Example:
-- Use the same classification experiments results [above](#export-extended-gain-efficiency-table)
+- Use the same classification experiment results [above](#export-extended-gain-efficiency-table)
 - Also generate a column for the hit % at interruptions with exact solution (where all column values have to be 100%)
-
 ```
-(alk) alk $ python -m alk.run.hit_intrpt -p ~/Desktop/results -c .98 .95 .92 .9 .85 .8 .75 .7 --z -1 --wsoln 1 --rtrim _TRAIN _TEST
+(alk) alk $ python -m alk.run.hit_classify -p ~/Desktop/results -c .98 .95 .92 .9 .85 .8 .75 .7 --z -1 --wsoln 1 --rtrim _TRAIN _TEST
 ```
 
 ### Alternative Rank Iterations
-These are alternatives searches for candidates in the internal data structure `RANK`. 
-The default iteration style is _Top Down_ iteration of `Stage`s in `RANK`.
+These are alternative searches for kNN candidates in the internal data structure `RANK`. 
+The default iteration style is _Top Down_ iteration of `RANK`'s `Stage`s.
 
 #### Jumping
 After evaluating every _n^th_ candidate, this iteration makes a momentary jump to the next `Stage` in `RANK` for candidacy assessment.
 
 Example:
 - Jump after: `[1, 2, 5, 10, 50]`
-
 ```
-(alk) alk $ python -m alk.run.run_jump "~/Dev/alk/datasets/SwedishLeaf_TEST.arff.arff" -k 9 -t 0.1 --width 40 --step 1 --jumps 1, 2, 5, 10, 50 --logc INFO --logf DEBUG
+(alk) alk $ python -m alk.run.run_jump "~/Dev/alk/datasets/SwedishLeaf_TEST.arff" -k 9 -t 0.01 --width 40 --step 10 --jumps 1 2 5 10 50 --logc INFO --logf DEBUG
 ```
 
 ##### Export Jumping Gain
-Exports the _Average Gain for TopDown vs Jumping Rank Iterations_ LaTeX table
+Exports the _Average Gain for TopDown vs Jumping Rank Iterations_ LaTeX table.
 
 Example:
-- Use experiments results at `~/Desktop/results`
-
+- Use experiment results at `~/Desktop/results`
 ```
 (alk) alk $ python -m alk.run.gain_jump -p ~/Desktop/results --rtrim _TRAIN _TEST
 ```
@@ -326,22 +317,20 @@ Example:
 #### Exploit Approaching Candidates
 During the kNN search for a problem update _P^u_, if a candidate proves nearer to _P^u_ than it was to a predecessor problem _P^j (j < u)_, 
 this iteration exploits the predecessor and successor cases of that candidate to check if they get nearer to _P^u_ as well.
-A hash table is used to access the cases in `RANK`. The code is not yet optimized for the maintenance of the hash table in this prototype. 
+A hash table is used to access the temporally related cases in `RANK`. The code is not yet optimized for the maintenance of the hash table in this prototype. 
 Use it at the peril of long execution times. 
 
 Example:
-- Use experiments results at `~/Desktop/results`
-
+- Use experiment results at `~/Desktop/results`
 ```
-(alk) alk $ python -m alk.run.run_exploit "~/Dev/alk/datasets/SwedishLeaf_TEST.arff.arff" -k 9 -t 0.1 --width 40 --step 1 --logc INFO --logf DEBUG
+(alk) alk $ python -m alk.run.run_exploit "~/Dev/alk/datasets/SwedishLeaf_TEST.arff" -k 9 -t 0.01 --width 40 --step 10 --logc INFO --logf DEBUG
 ```
 
 ##### Export Exploiting Gain
-Exports the _Average Gain for TopDown vs ExploitCandidates Rank Iterations_ LaTeX table
+Exports the _Average Gain for TopDown vs Exploit Candidates Rank Iterations_ LaTeX table.
 
 Example:
-- Use experiments results at `~/Desktop/results`
-
+- Use experiment results at `~/Desktop/results`
 ```
 (alk) alk $ python -m alk.run.gain_exploit -p ~/Desktop/results --rtrim _TRAIN _TEST
 ```
