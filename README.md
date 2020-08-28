@@ -90,7 +90,7 @@ Finally, calculate gain & efficiency of confidence of _ALK_ upon these interrupt
  
 In following subsections, we provide the scripts to conduct these three steps. 
 For demo purposes, _ALK_ uses local copies of the `arff`-formatted time series datasets that are publicly available in [[3](#ref3)].
-_Euclidean distance_ is used as a metric which is normalized taking into account the min and max values of the related dataset. 
+_Euclidean distance_ is used as the metric which is normalized taking into account the min and max values of the related dataset. 
 
 If not stated otherwise in script arguments, _ALK_ assumes that:
 
