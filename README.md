@@ -321,7 +321,6 @@ A hash table is used to access the temporally related cases in `RANK`. The code 
 Use it at the peril of long execution times. 
 
 Example:
-- Use experiment results at `~/Desktop/results`
 ```
 (alk) alk $ python -m alk.run.run_exploit "~/Dev/alk/datasets/SwedishLeaf_TEST.arff" -k 9 -t 0.01 --width 40 --step 10 --logc INFO --logf DEBUG
 ```
