@@ -298,7 +298,7 @@ These are alternative searches for kNN candidates in the internal data structure
 The default iteration style is _Top Down_ iteration of `RANK`'s `Stage`s.
 
 #### Jumping
-After evaluating every _n^th_ candidate, this iteration makes a momentary jump to the next `Stage` in `RANK` for candidacy assessment.
+After evaluating every _n<sup>th</sup>_ candidate, this iteration makes a momentary jump to the next `Stage` in `RANK` for candidacy assessment.
 
 Example:
 - Jump after: `[1, 2, 5, 10, 50]`
@@ -344,13 +344,13 @@ or alternatively, a _proportion_ of cases can be extracted from the case base an
 their similarities to all remaining cases are calculated. The latter option is recommended for large case bases.
 
 Example:
-- Use `PowerCons_TRAIN.arff` dataset
+- Use `SwedishLeaf_TEST.arff` dataset
 - Generate four case bases with combinations of time window `width`=[Expanding, 40] and `step`=[1, 10] settings
 - Use 1% of the dataset as test sequences to generate queries, and the rest as the case base
 - Distribute the similarity value densities as percentage in 10 `bins`
 
 ```
-(alk) alk $ python -m alk.run.sim_distr ~/Dev/alk/datasets/PowerCons_TRAIN.arff --width 0 40 --step 1 10 --bins 10 --testsize 0.01
+(alk) alk $ python -m alk.run.sim_distr ~/Dev/alk/datasets/SwedishLeaf_TEST.arff --width 0 40 --step 1 10 --bins 10 --testsize 0.01
 ```
 
 ## Authors
