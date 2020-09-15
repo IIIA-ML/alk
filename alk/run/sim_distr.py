@@ -1,7 +1,7 @@
 """Generates a LaTeX table for the similarity distribution between the cases of given case bases
 
 usage: sim_distr.py [-h] [-p FPATH] [-w WIDTH [WIDTH ...]]
-                    [-s STEP [STEP ...]] [-b NBIN] [-t TESTSIZE] [--dec DEC]
+                    [-s STEP [STEP ...]] [-b BINS] [-t TESTSIZE] [--dec DEC]
                     [datasets [datasets ...]]
 
 positional arguments:
@@ -17,7 +17,7 @@ optional arguments:
                         Time window width(s) (default: None)
   -s STEP [STEP ...], --step STEP [STEP ...]
                         Time window step(s) (default: None)
-  -b NBIN, --nbin NBIN  Number of bins for the histogram (default: 10)
+  -b BINS, --bins BINS  Number of bins for the histogram (default: 10)
   -t TESTSIZE, --testsize TESTSIZE
                         Test size for the dataset. float between (0.0, 1.0) as
                         a proportion; int > 0 for absolute number of test
@@ -27,7 +27,18 @@ optional arguments:
                         (default: 2)
 
 Examples:
-    $ python -m alk.run.sim_distr -p ~/Dev/alk/datasets/ --width 0 40 --step 1 10 --testsize 1
+    # Use `PowerCons_TRAIN.arff` dataset
+    # Generate four case bases with combinations of time window `width`=[Expanding, 40] and `step`=[1, 10] settings
+    # Use 1% of the dataset as test sequences to generate queries, and the rest as the case base
+    # Distribute the similarity value densities as percentage in 10 `bins`
+    $ python -m alk.run.sim_distr ~/Dev/alk/datasets/PowerCons_TRAIN.arff --width 0 40 --step 1 10 --bins 10 --testsize 0.01
+    # Use all datasets
+    # Use only 1 sequence from the dataset to generate queries, and the rest of the sequences as the case base
+    $ python -m alk.run.sim_distr -p ~/Dev/alk/datasets/ --width 0 40 --step 1 10 --bins 10 --testsize 1
+    # Use `PowerCons_TRAIN.arff` dataset
+    # Generate one case base with time window `width`=40 and `step`=10 settings
+    # Calculate _pairwise_ similarities (Beware of long execution times for large case bases!)
+    $ python -m alk.run.sim_distr ~/Dev/alk/datasets/PowerCons_TRAIN.arff --width 40 --step 10 --bins 10 --testsize 0
 
 """
 
@@ -142,7 +153,7 @@ def _parse_args(argv):
                         help="Time window width(s)")
     parser.add_argument("-s", "--step", nargs="+", type=int,
                         help="Time window step(s)")
-    parser.add_argument("-b", "--nbin", type=int, default=10,
+    parser.add_argument("-b", "--bins", type=int, default=10,
                         help="Number of bins for the histogram")
     parser.add_argument("-t", "--testsize", type=float, default=1, action="store",
                         help="Test size for the dataset. float between (0.0, 1.0) as a proportion; "
@@ -164,7 +175,7 @@ def main(argv=None):
     LBL_FWIDTH = "Width"
     LBL_FSTEP = "Step"
 
-    bin_width = 1. / args.nbin
+    bin_width = 1. / args.bins
     bins = np.arange(0, 1. + bin_width, bin_width)
     decimals_bin_width = len(str(bin_width).split('.')[1])
     if decimals_bin_width > 2:
@@ -198,14 +209,14 @@ def main(argv=None):
         dataset_name = os.path.expanduser(dataset)
         dataset_name = os.path.splitext(os.path.basename(dataset_name))[0]
         logger.info("Dataset: {}".format(dataset_name))
+        # get the similarity for the dataset
+        similarity = ts.euclidean_similarity_ts_dataset(dataset)
         for tw_width in args.width:
             logger.info(".. TW width: {}".format(tw_width))
             for tw_step in args.step:
                 logger.info(".. TW step: {}".format(tw_step))
                 # read the dataset -> cb
                 cb = ts.gen_cb(dataset=dataset, tw_width=tw_width, tw_step=tw_step)
-                # get the similarity for the dataset
-                similarity = ts.euclidean_similarity_ts_dataset(dataset)
                 if test_size == 0:
                     distr_arr = pairwise_sim(cb, similarity)
                 else:
