@@ -46,6 +46,8 @@ For further reading on _Anytime Lazy kNN_, please refer to the articles [[1](#re
       - [Export Jumping Gain](#export-jumping-gain)
     - [Exploit Approaching Candidates](#exploit-approaching-candidates)
       - [Export Exploiting Gain](#export-exploiting-gain)
+- [Tools](#tools)
+  - [Similarity Distribution](#similarity-distribution)
 - [Authors](#authors)
 - [License](#license)
 - [References](#references)
@@ -146,7 +148,6 @@ Example:
 ```
 (alk) alk $ python -m alk.run.fig ~/Dev/alk/results/INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1_r_td.pk -p i -f png --kwargs total=True actual=True all_k=True all_ticks=False with_title=True signature=True marker_size=0
 ```
-
 
 #### Plot Quality Map
 
@@ -332,6 +333,24 @@ Example:
 - Use experiment results at `~/Desktop/results`
 ```
 (alk) alk $ python -m alk.run.gain_exploit -p ~/Desktop/results --rtrim _TRAIN _TEST
+```
+
+## Tools 
+
+### Similarity Distribution
+This script exports the similarity distribution in given case base(s) as a LaTeX table. 
+The distribution can be calculated for _pairwise_ similarities between all cases, 
+or alternatively, a _proportion_ of cases can be extracted from the case base and 
+their similarities to all remaining cases are calculated. The latter option is recommended for large case bases.
+
+Example:
+- Use `PowerCons_TRAIN.arff` dataset
+- Generate four case bases with combinations of time window `width`=[Expanding, 40] and `step`=[1, 10] settings
+- Use 1% of the dataset as test sequences to generate queries, and the rest as the case base
+- Distribute the similarity value densities as percentage in 10 `bins`
+
+```
+(alk) alk $ python -m alk.run.sim_distr ~/Dev/alk/datasets/PowerCons_TRAIN.arff --width 0 40 --step 1 10 --bins 10 --testsize 0.01
 ```
 
 ## Authors
