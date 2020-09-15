@@ -316,8 +316,8 @@ Example:
 ```
 
 #### Exploit Approaching Candidates
-During the kNN search for a problem update _P^u_, if a candidate proves nearer to _P^u_ than it was to a predecessor problem _P^j (j < u)_, 
-this iteration exploits the predecessor and successor cases of that candidate to check if they get nearer to _P^u_ as well.
+During the kNN search for a problem update _P<sup>u</sup>_, if a candidate proves nearer to _P<sup>u</sup>_ than it was to a predecessor problem _P<sup>j</sup> (j < u)_, 
+this iteration exploits the predecessor and successor cases of that candidate to check if they get nearer to _P<sup>u</sup>_ as well.
 A hash table is used to access the temporally related cases in `RANK`. The code is not yet optimized for the maintenance of the hash table in this prototype. 
 Use it at the peril of long execution times. 
 
