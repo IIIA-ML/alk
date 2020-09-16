@@ -339,9 +339,8 @@ Example:
 
 ### Similarity Distribution
 This script exports the similarity distribution in given case base(s) as a LaTeX table. 
-The distribution can be calculated for _pairwise_ similarities between all cases, 
-or alternatively, a _proportion_ of cases can be extracted from the case base and 
-their similarities to all remaining cases are calculated. The latter option is recommended for large case bases.
+The distribution is calculated by extracting a proportion of cases from the case base and computing
+their similarities to all remaining cases.
 
 Example:
 - Use `SwedishLeaf_TEST.arff` dataset
