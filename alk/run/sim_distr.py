@@ -21,8 +21,7 @@ optional arguments:
   -t TESTSIZE, --testsize TESTSIZE
                         Test size for the dataset. float between (0.0, 1.0) as
                         a proportion; int > 0 for absolute number of test
-                        sequences; 0 for pairwise similarity calculation
-                        between all cases (default: 1)
+                        sequences (default: 1)
   --dec DEC             Decimal digits to be used in percentage values
                         (default: 2)
 
@@ -35,17 +34,13 @@ Examples:
     # Use all datasets
     # Use only 1 sequence from the dataset to generate queries, and the rest of the sequences as the case base
     $ python -m alk.run.sim_distr -p ~/Dev/alk/datasets/ --width 0 40 --step 1 10 --bins 10 --testsize 1
-    # Use `PowerCons_TRAIN.arff` dataset
-    # Generate one case base with time window `width`=40 and `step`=10 settings
-    # Calculate _pairwise_ similarities (Beware of long execution times for large case bases!)
-    $ python -m alk.run.sim_distr ~/Dev/alk/datasets/PowerCons_TRAIN.arff --width 40 --step 10 --bins 10 --testsize 0
 
 """
 
 import argparse
 import datetime
-import itertools
 import logging
+import math
 import os
 import sys
 import time
@@ -62,48 +57,19 @@ from alk.run import run_common
 logger = logging.getLogger("ALK")
 
 
-def pairwise_sim(cb, similarity):
-    """Calculates pairwise similarities between all cases
-
-    Args:
-        cb (cbr.TCaseBase): Temporal case base
-        similarity (Callable): Similarity metric
-
-    Returns:
-        numpy.ndarray: Condensed similarity matrix as a 1D array (i.e. only the upper-right triangle of the matrix)
-
-    """
-    logger.info(".. Calculating pairwise similarity distribution between all cases")
-    queries = []
-    computed_arr = []
-    for sequence in cb.sequences():
-        for upd_id in range(sequence.n_profiles()):
-            queries.append(cb.get_case_query(cbr.CaseId(sequence.seq_id, upd_id)))
-    logger.info(".... Total cases: {}".format(len(queries)))
-    queries_len = [len(q) for q in queries]
-    logger.info(".... Number of features min: {}, max: {}".format(min(queries_len), max(queries_len)))
-    for i, j in itertools.combinations(range(cb.size()), 2):
-        # print(".... Computing pairwise {} for the case: {}".format(metric_tag_plural, i), end="\r")
-        computed_arr.append(similarity(queries[i], queries[j]))
-    logger.info(".... Total computations: {}".format(len(computed_arr)))
-    computed_arr = np.array(computed_arr)
-    logger.info(".... Similarity min: {}, max: {}, avg: {}".format(computed_arr.min(), computed_arr.max(),
-                                                                   computed_arr.mean()))
-    return computed_arr
-
-
-def proportion_sim(cb, similarity, test_size=10):
+def sim_hist(cb, similarity, bins=10, test_size=10):
     """Calculates similarities between a proportion of cases over the rest of the case base
 
     Args:
         cb (cbr.TCaseBase): Temporal case base
         similarity (Callable): Similarity metric
+        bins (int): Number of bins for the histogram
         test_size(Union[float, int]): test size to split the `cb` into test sequences and CB_train.
             If float, should be between 0.0 and 1.0 and represent the proportion of the `cb` to generate test sequences;
             if int, represents the absolute number of test sequences.
 
     Returns:
-        numpy.ndarray: 1D array of calculated similarities
+        numpy.ndarray: 1D array of histogram of similarity distribution given as percentage values
 
     """
 
@@ -113,31 +79,39 @@ def proportion_sim(cb, similarity, test_size=10):
     linear_search = alk.LinearSearch(cb=CB_train, similarity=similarity)
     logger.info(".... Linear search with {} queries X {} cases".format(sum([seq.n_profiles() for seq in CB_test]),
                                                                 CB_train.size()))
-    computed_arr = []
+    distr_arr = np.full((bins,), 0, dtype=int)
+    bin_width = 1. / bins
     total_calcs = 0
     try:
         n_features_min, n_features_max = len(CB_test[0].profile(0)), len(CB_test[0].profile(0))
     except IndexError:
         logger.error("No queries to test. Check your case base and test size.")
         sys.exit(1)
+    sim_min, sim_max, sim_mean = 1., 0., 0.
+    sim_cntr = 0
     for sequence in CB_test:
         for upd_id in range(sequence.n_profiles()):
-            query = sequence.profile(upd_id)
+            query = sequence.profile(upd_id)  # Get query for the sequence update
             n_features = len(query)
             if n_features > n_features_max:
                 n_features_max = n_features
             elif n_features < n_features_min:
                 n_features_min = n_features
-            stage, calcs = linear_search.search(query)
+            stage, calcs = linear_search.search(query)  # Search
             for assess in stage.nn:
-                computed_arr.append(assess.sim)
+                sim_cntr += 1
+                bin_idx = 0 if assess.sim == 0 else math.ceil(assess.sim / bin_width) - 1
+                distr_arr[bin_idx] += 1  # Update sim occurrence array
+                if assess.sim < sim_min:
+                    sim_min = assess.sim
+                if assess.sim > sim_max:
+                    sim_max = assess.sim
+                sim_mean = sim_mean + (assess.sim - sim_mean) / sim_cntr  # Incrementally update mean
             total_calcs += calcs
     logger.info(".... Number of features min: {}, max: {}".format(n_features_min, n_features_max))
     logger.info(".... Total computations: {}".format(total_calcs))
-    computed_arr = np.array(computed_arr)
-    logger.info(".... Similarity min: {}, max: {}, avg: {}".format(computed_arr.min(), computed_arr.max(),
-                                                                   computed_arr.mean()))
-    return computed_arr
+    logger.info(".... Similarity min: {}, max: {}, avg: {}".format(sim_min, sim_max, sim_mean))
+    return distr_arr / distr_arr.sum()
 
 
 def _parse_args(argv):
@@ -157,8 +131,7 @@ def _parse_args(argv):
                         help="Number of bins for the histogram")
     parser.add_argument("-t", "--testsize", type=float, default=1, action="store",
                         help="Test size for the dataset. float between (0.0, 1.0) as a proportion; "
-                             "int > 0 for absolute number of test sequences; "
-                             "0 for pairwise similarity calculation between all cases")
+                             "int > 0 for absolute number of test sequences")
     parser.add_argument("--dec", type=int, default=2,
                         help="Decimal digits to be used in percentage values")
     # Parse arguments
@@ -175,12 +148,12 @@ def main(argv=None):
     LBL_FWIDTH = "Width"
     LBL_FSTEP = "Step"
 
-    bin_width = 1. / args.bins
-    bins = np.arange(0, 1. + bin_width, bin_width)
+    bins = args.bins
+    bin_width = 1. / bins
     decimals_bin_width = len(str(bin_width).split('.')[1])
     if decimals_bin_width > 2:
         decimals_bin_width = 2
-    cols_bin = ["{0:.{1}f}".format(i, decimals_bin_width) for i in list(bins[1:])]
+    cols_bin = ["{0:.{1}f}".format(i, decimals_bin_width) for i in list(np.arange(0, 1. + bin_width, bin_width)[1:])]
 
     # Create output dataframe
     df_output = pd.DataFrame(columns=[LBL_DATASET, LBL_FWIDTH, LBL_FSTEP] + cols_bin)
@@ -217,17 +190,11 @@ def main(argv=None):
                 logger.info(".. TW step: {}".format(tw_step))
                 # read the dataset -> cb
                 cb = ts.gen_cb(dataset=dataset, tw_width=tw_width, tw_step=tw_step)
-                if test_size == 0:
-                    distr_arr = pairwise_sim(cb, similarity)
-                else:
-                    distr_arr = proportion_sim(cb, similarity, test_size)
-                # Calculate the similarity distribution % over histogram
-                distr_arr_hist, _ = np.histogram(distr_arr, weights=np.ones(len(distr_arr)) / len(distr_arr),
-                                                 bins=bins, density=False)
+                distr_hist = sim_hist(cb, similarity, bins, test_size)
                 dict_distr = {LBL_DATASET: dataset_name,
                               LBL_FWIDTH: run_common.time_window_width_str(tw_width),
                               LBL_FSTEP: tw_step}
-                dict_distr.update(dict(zip(cols_bin, distr_arr_hist * 100.)))
+                dict_distr.update(dict(zip(cols_bin, distr_hist * 100.)))
                 # Add the distribution to the output dataframe
                 df_output = df_output.append(dict_distr, ignore_index=True)
 
