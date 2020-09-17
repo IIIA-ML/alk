@@ -342,7 +342,7 @@ This script exports the similarity distribution in given case base(s) as a LaTeX
 The distribution is calculated by extracting a proportion of cases from the case base and computing
 their similarities to all remaining cases. This tool can be used to 
 a) check if the similarity metric _discriminates_ the cases well enough;
-b) check if kNN search is prone to so-called _curse of dimensionality_;
+b) check if kNN search is prone to the so-called _curse of dimensionality_;
 c) have a preliminary idea of the _gain_ of _ALK_ for a case base.
 
 Example:
