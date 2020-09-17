@@ -340,16 +340,19 @@ Example:
 ### Similarity Distribution
 This script exports the similarity distribution in given case base(s) as a LaTeX table. 
 The distribution is calculated by extracting a proportion of cases from the case base and computing
-their similarities to all remaining cases.
+their similarities to all remaining cases. This tool can be used to 
+a) check if the similarity metric _discriminates_ the cases well enough;
+b) check if kNN search is prone to so-called _curse of dimensionality_;
+c) have a preliminary idea of the _gain_ of _ALK_ for a case base.
 
 Example:
 - Use `SwedishLeaf_TEST.arff` dataset
-- Generate four case bases with combinations of time window `width`=[Expanding, 40] and `step`=[1, 10] settings
+- Generate a case base with time window `width`=40 and time window `step`=10 settings
 - Use 1% of the dataset as test sequences to generate queries, and the rest as the case base
 - Distribute the similarity value densities as percentage in 10 `bins`
 
 ```
-(alk) alk $ python -m alk.run.sim_distr ~/Dev/alk/datasets/SwedishLeaf_TEST.arff --width 0 40 --step 1 10 --bins 10 --testsize 0.01
+(alk) alk $ python -m alk.run.sim_distr ~/Dev/alk/datasets/SwedishLeaf_TEST.arff --width 40 --step 10 --bins 10 --testsize 0.01
 ```
 
 ## Authors
