@@ -191,6 +191,9 @@ def main(argv=None):
                 # read the dataset -> cb
                 cb = ts.gen_cb(dataset=dataset, tw_width=tw_width, tw_step=tw_step)
                 distr_hist = sim_hist(cb, similarity, bins, test_size)
+                # logger.info(".... Distribution:\n{}".format(
+                #     pd.DataFrame([distr_hist * 100], columns=cols_bin).to_string(index=False,
+                #                                                                  float_format=float_formatter)))
                 dict_distr = {LBL_DATASET: dataset_name,
                               LBL_FWIDTH: run_common.time_window_width_str(tw_width),
                               LBL_FSTEP: tw_step}
