@@ -1,6 +1,6 @@
 """Script for Anytime Lazy KNN plots
 
-usage: fig.py [-h] [-p {g,qm,i,p,e}] [-f {pdf,png,ps,eps,svg}] [--dir DIR]
+usage: fig.py [-h] [-p {g,qm,i,p,e,cb}] [-f {pdf,png,ps,eps,svg}] [--dir DIR]
               [--kwargs [KWARGS [KWARGS ...]]]
               experiments [experiments ...]
 
@@ -9,10 +9,10 @@ positional arguments:
 
 optional arguments:
   -h, --help            show this help message and exit
-  -p {g,qm,i,p,e}, --plot {g,qm,i,p,e}
+  -p {g,qm,i,p,e,cb}, --plot {g,qm,i,p,e,cb}
                         Plot type: g: gains, qm: quality map, i: calc
-                        insights, p: PDP, e: confidence efficiency (default:
-                        g)
+                        insights, p: PDP, e: confidence efficiency, cb: time
+                        series sequence(s) and case(s) (default: g)
   -f {pdf,png,ps,eps,svg}, --fileformat {pdf,png,ps,eps,svg}
                         File format for saving plots. If not supplied, plot is
                         not saved. (default: None)
@@ -36,8 +36,13 @@ Examples:
     $ python -m alk.run.fig ~/Dev/alk/pdps/PDP_INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1__cs_0.03_qs_0.025.pk -p p --kwargs update=10 ki=2 to_latex=True decimals=3 start_q=.75
     # As figure
     $ python -m alk.run.fig ~/Dev/alk/pdps/PDP_INS_SwedishLeaf_TEST_w_40_s_10_k_9_t_0.1__cs_0.03_qs_0.025.pk -p p -f png --kwargs update=10 ki=2 to_latex=False decimals=3 start_q=.75
-    # -- Confidence Efficiency --
+    # --- Confidence Efficiency ---
     $ python -m alk.run.fig "INT_SwedishLeaf_TRAIN_w_0_s_1_k_9_r_td_PDP_SwedishLeaf_TEST_c_0.0025_q_0.05__ct_[0.98_0.95_0.92_0.9_0.85_0.8_0.75_0.7]_z_-1_t_0.01.pk" "INT_SwedishLeaf_TRAIN_w_0_s_10_k_9_r_td_PDP_SwedishLeaf_TEST_c_0.0025_q_0.05__ct_[0.98_0.95_0.92_0.9_0.85_0.8_0.75_0.7]_z_-1_t_0.01.pk" "INT_SwedishLeaf_TRAIN_w_40_s_1_k_9_r_td_PDP_SwedishLeaf_TEST_c_0.0025_q_0.05__ct_[0.98_0.95_0.92_0.9_0.85_0.8_0.75_0.7]_z_-1_t_0.01.pk" "INT_SwedishLeaf_TRAIN_w_40_s_10_k_9_r_td_PDP_SwedishLeaf_TEST_c_0.0025_q_0.05__ct_[0.98_0.95_0.92_0.9_0.85_0.8_0.75_0.7]_z_-1_t_0.01.pk" -p e -f png --dir ~/Dev/alk/results/ --kwargs maximized=False with_title=True signature=True outliers=False aspect=.5
+    # --- Time Series Sequences and Cases ---
+    # Plot the 5^th cases for the 4^th and 14^th sequences together with the full sequences
+    $ python -m alk.run.fig ~/Dev/alk/datasets/SwedishLeaf_TRAIN.arff -p cb --kwargs seqs="[4, 14]" width=40 step=10 full=True upd_ind=5
+    # Plot 3 random sequences
+    $ python -m alk.run.fig ~/Dev/alk/datasets/SwedishLeaf_TRAIN.arff -p cb --kwargs seqs=3 width=40 step=10 full=True upd_ind=5
 
 """
 
@@ -46,14 +51,15 @@ import os
 import sys
 
 from alk import helper
-from alk.plot import plt_insights, plt_pdp, plt_intrpt
+from alk.plot import plt_insights, plt_pdp, plt_intrpt, plt_ts
 
 
 PLOT_FUNC_DICT = {"g": {"func": plt_insights.gains_multiple, "help": "gains"},
                   "qm": {"func": plt_insights.quality_map, "help": "quality map"},
                   "i": {"func": plt_insights.insights_multiple, "help": "calc insights"},
                   "p": {"func": plt_pdp.pdp, "help": "PDP"},
-                  "e": {"func": plt_intrpt.efficiency, "help": "confidence efficiency"}}
+                  "e": {"func": plt_intrpt.efficiency, "help": "confidence efficiency"},
+                  "cb": {"func": plt_ts.cb_sequences, "help": "time series sequence(s) and case(s)"}}
 
 PLOT_FILE_FORMATS = ["pdf", "png", "ps", "eps", "svg"]
 
@@ -100,7 +106,7 @@ def main(argv=None):
     # return
 
     # TODO: Find a better way to dispatch kwargs to single experiment expecting plots.
-    plot_func(experiments if plot_type not in ["qm", "qp", "p", "cb", "ir"] else experiments[0],
+    plot_func(experiments if plot_type not in ["qm", "p", "cb"] else experiments[0],
               file_format=file_format,
               **kwargs)
 

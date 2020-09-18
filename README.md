@@ -48,6 +48,7 @@ For further reading on _Anytime Lazy kNN_, please refer to the articles [[1](#re
       - [Export Exploiting Gain](#export-exploiting-gain)
 - [Tools](#tools)
   - [Similarity Distribution](#similarity-distribution)
+  - [Plot Cases](#plot-cases)
 - [Authors](#authors)
 - [License](#license)
 - [References](#references)
@@ -354,6 +355,20 @@ Example:
 ```
 (alk) alk $ python -m alk.run.sim_distr ~/Dev/alk/datasets/SwedishLeaf_TEST.arff --width 40 --step 10 --bins 10 --testsize 0.01
 ```
+
+### Plot Cases
+Plot the _problem_ parts of the cases corresponding to the given update of the given/random _time series_ sequences.
+
+Example:
+- Use the case base generated [above](#similarity-distribution)
+- Plot the 5<sup>th</sup> case for the 4<sup>th</sup> and 14<sup>th</sup> sequences (For two random sequences, pass `seqs`=2)
+- Plot `full` sequences on the background as well
+- Display the plot (don't save it)
+
+```
+(alk) alk $ python -m alk.run.fig ~/Dev/alk/datasets/SwedishLeaf_TRAIN.arff -p cb --kwargs seqs="[4, 14]" width=40 step=10 full=True upd_ind=5
+```
+
 
 ## Authors
 
