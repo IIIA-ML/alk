@@ -57,7 +57,7 @@ from alk.run import run_common
 logger = logging.getLogger("ALK")
 
 
-def sim_hist(cb, similarity, bins=10, test_size=10):
+def sim_hist(cb, similarity, bins=10, test_size=10, upd_select=None):
     """Calculates similarities between a proportion of cases over the rest of the case base
 
     Args:
@@ -66,7 +66,8 @@ def sim_hist(cb, similarity, bins=10, test_size=10):
         bins (int): Number of bins for the histogram
         test_size(Union[float, int]): test size to split the `cb` into test sequences and CB_train.
             If float, should be between 0.0 and 1.0 and represent the proportion of the `cb` to generate test sequences;
-            if int, represents the absolute number of test sequences.
+            if int, represents the absolute number of test sequences
+            upd_select (int): Particular update index to use as the query for each sequence"
 
     Returns:
         numpy.ndarray: 1D array of histogram of similarity distribution given as percentage values
@@ -77,8 +78,8 @@ def sim_hist(cb, similarity, bins=10, test_size=10):
     CB_train, CB_test = exp_common.split_cb(cb, test_size)
     CB_train = cbr.TCaseBase(cb=CB_train)
     linear_search = alk.LinearSearch(cb=CB_train, similarity=similarity)
-    logger.info(".... Linear search with {} queries X {} cases".format(sum([seq.n_profiles() for seq in CB_test]),
-                                                                CB_train.size()))
+    total_queries = sum([seq.n_profiles() for seq in CB_test]) if upd_select is None else len(CB_test)
+    logger.info(".... Linear search with {} queries X {} cases".format(total_queries, CB_train.size()))
     distr_arr = np.full((bins,), 0, dtype=int)
     bin_width = 1. / bins
     total_calcs = 0
@@ -90,7 +91,7 @@ def sim_hist(cb, similarity, bins=10, test_size=10):
     sim_min, sim_max, sim_mean = 1., 0., 0.
     sim_cntr = 0
     for sequence in CB_test:
-        for upd_id in range(sequence.n_profiles()):
+        for upd_id in range(sequence.n_profiles()) if upd_select is None else [upd_select]:
             query = sequence.profile(upd_id)  # Get query for the sequence update
             n_features = len(query)
             if n_features > n_features_max:
@@ -132,6 +133,8 @@ def _parse_args(argv):
     parser.add_argument("-t", "--testsize", type=float, default=1, action="store",
                         help="Test size for the dataset. float between (0.0, 1.0) as a proportion; "
                              "int > 0 for absolute number of test sequences")
+    parser.add_argument("-u", "--update", type=int, default=None,
+                        help="Particular update index to use as the query for each sequence")
     parser.add_argument("--dec", type=int, default=2,
                         help="Decimal digits to be used in percentage values")
     # Parse arguments
@@ -166,15 +169,19 @@ def main(argv=None):
     else:
         datasets = [os.path.expanduser(e) for e in args.datasets]
     test_size = args.testsize if 0. < args.testsize < 1. else int(args.testsize)
+    update = args.update
     dec_digits = args.dec
     float_formatter = lambda x: "{0:.{1}f}".format(x, dec_digits) if isinstance(x, (int, float)) else x
 
     # Set logger
-    save_fn = "similarity_distr_(x{n})_w_{w}_s_{s}_t_{t}".format(n=len(datasets), w=str(args.width), s=str(args.step),
-                                                                 t=str(test_size))
+    save_fn = "similarity_distr_(x{n})_w_{w}_s_{s}_t_{t}{u}".format(n=len(datasets), w=str(args.width),
+                                                                    s=str(args.step), t=str(test_size),
+                                                                    u="_u_{}".format(
+                                                                        update) if update is not None else "")
     save_fpath = os.path.join(common.APP.FOLDER.FIGURE, "{}.tex".format(save_fn))
     log_file = common.gen_log_file(save_fpath)
-    logger = common.initialize_logger(console_level="INFO", output_dir=common.APP.FOLDER.LOG, log_file=log_file, file_level="INFO")
+    logger = common.initialize_logger(console_level="INFO", output_dir=common.APP.FOLDER.LOG,
+                                      log_file=log_file, file_level="INFO")
     logger.info("Case base similarity distribution script launched with args: {}".format(str(vars(args))))
 
     # Start computing distributions for CBs
@@ -190,7 +197,7 @@ def main(argv=None):
                 logger.info(".. TW step: {}".format(tw_step))
                 # read the dataset -> cb
                 cb = ts.gen_cb(dataset=dataset, tw_width=tw_width, tw_step=tw_step)
-                distr_hist = sim_hist(cb, similarity, bins, test_size)
+                distr_hist = sim_hist(cb, similarity, bins, test_size, update)
                 # logger.info(".... Distribution:\n{}".format(
                 #     pd.DataFrame([distr_hist * 100], columns=cols_bin).to_string(index=False,
                 #                                                                  float_format=float_formatter)))

@@ -356,6 +356,9 @@ Example:
 (alk) alk $ python -m alk.run.sim_distr ~/Dev/alk/datasets/SwedishLeaf_TEST.arff --width 40 --step 10 --bins 10 --testsize 0.01
 ```
 
+To check the similarity distribution only for the u<sup>th</sup> update of test sequences, pass `--update`=u as argument to the script.
+To check for the last update only, pass `--update`=-1.
+
 ### Plot Cases
 Plot the _problem_ parts of the cases corresponding to the given update of the given/random _time series_ sequences.
 
