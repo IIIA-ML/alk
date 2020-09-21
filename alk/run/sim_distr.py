@@ -1,7 +1,8 @@
 """Generates a LaTeX table for the similarity distribution between the cases of given case bases
 
 usage: sim_distr.py [-h] [-p FPATH] [-w WIDTH [WIDTH ...]]
-                    [-s STEP [STEP ...]] [-b BINS] [-t TESTSIZE] [--dec DEC]
+                    [-s STEP [STEP ...]] [-b BINS] [-t TESTSIZE] [-u UPDATE]
+                    [--dec DEC]
                     [datasets [datasets ...]]
 
 positional arguments:
@@ -22,6 +23,9 @@ optional arguments:
                         Test size for the dataset. float between (0.0, 1.0) as
                         a proportion; int > 0 for absolute number of test
                         sequences (default: 1)
+  -u UPDATE, --update UPDATE
+                        Particular update index to use as the query for each
+                        sequence (default: None)
   --dec DEC             Decimal digits to be used in percentage values
                         (default: 2)
 
@@ -34,6 +38,10 @@ Examples:
     # Use all datasets
     # Use only 1 sequence from the dataset to generate queries, and the rest of the sequences as the case base
     $ python -m alk.run.sim_distr -p ~/Dev/alk/datasets/ --width 0 40 --step 1 10 --bins 10 --testsize 1
+    # Check the similarity distribution only for the 3rd update
+    $ python -m alk.run.sim_distr -p ~/Dev/alk/datasets/ --width 0 40 --step 1 10 --bins 10 --testsize 0.01 --update=3
+    # Check the similarity distribution only for the last update (i.e. longest case in a sequence)
+    $ python -m alk.run.sim_distr -p ~/Dev/alk/datasets/ --width 0 40 --step 1 10 --bins 10 --testsize 0.01 --update=-1
 
 """
 
