@@ -18,7 +18,7 @@ _ALK Classifier_ is an extension to _ALK_ for its use as a kNN classifier.
 _ALK Classifier_ also offers the option to interrupt the algorithm upon guaranteeing exact solution without the need to find all exact kNNs, when possible. 
 Thus, this option further speeds up kNN classification. 
 
-_ALK_ and _ALK Classifier_ has been developed as part of the authors' _PhD research_ at the _Artificial Intelligence Research Institute_, [IIIA-CSIC](https://iiia.csic.es/). 
+_ALK_ and _ALK Classifier_ have been developed as part of the authors' _PhD research_ at the _Artificial Intelligence Research Institute_, [IIIA-CSIC](https://iiia.csic.es/). 
 For further reading on _Anytime Lazy kNN_, please refer to the articles [[1](#ref1)] and [[2](#ref2)]. For a deeper dive into details, please refer to the thesis [[3](#ref3)].
 
 ## Table of Contents
