@@ -3,7 +3,7 @@
 _Anytime Lazy kNN_ (_ALK_) is an anytime algorithm for fast kNN search.
 It finds _exact_ kNNs when allowed to run to completion with remarkable gain in execution time compared to a brute-force search.
 For applications where the gain in exact kNN search may not suffice,
-_ALK_ can be interrupted earlier and it returns _best-so-far_ kNNs together with a confidence value attached to each neighbor.
+_ALK_ can be interrupted earlier, and it returns _best-so-far_ kNNs together with a confidence value attached to each neighbor.
 Furthermore, it can automatically interrupt the search upon reaching a given confidence threshold and resume if so asked.
 
 _ALK_ owes its speed to detecting and assessing only _true kNN candidates_ of the given _query_.
@@ -18,8 +18,8 @@ _ALK Classifier_ is an extension to _ALK_ for its use as a kNN classifier.
 _ALK Classifier_ also offers the option to interrupt the algorithm upon guaranteeing exact solution without the need to find all exact kNNs, when possible. 
 Thus, this option further speeds up kNN classification. 
 
-_ALK_ and _ALK Classifier_ are being developed as part of the authors' _PhD research_ at the _Artificial Intelligence Research Institute_, [IIIA-CSIC](https://iiia.csic.es/). 
-For further reading on _Anytime Lazy kNN_, please refer to the articles [[1](#ref1)] and [[2](#ref2)].
+_ALK_ and _ALK Classifier_ has been developed as part of the authors' _PhD research_ at the _Artificial Intelligence Research Institute_, [IIIA-CSIC](https://iiia.csic.es/). 
+For further reading on _Anytime Lazy kNN_, please refer to the articles [[1](#ref1)] and [[2](#ref2)]. For a deeper dive into details, please refer to the thesis [[3](#ref3)].
 
 ## Table of Contents
 
@@ -57,7 +57,7 @@ For further reading on _Anytime Lazy kNN_, please refer to the articles [[1](#re
 
 _ALK_ is implemented in python and uses some of python scientific libraries.
 Below you can find information on how to get the software up and running on your local machine (tested on `OS X 10.14` and `Ubuntu 18.04`),
-and conduct experiments on publicly available _time series_ datasets [[3](#ref3)] which are used to generate demo case bases of our interest.
+and conduct experiments on publicly available _time series_ datasets [[4](#ref4)] which are used to generate demo case bases of our interest.
 
 ### Prerequisites
 
@@ -92,7 +92,7 @@ A fully fledged experimentation with _Anytime Lazy KNN_ consists of three steps:
 Finally, calculate gain & efficiency of confidence of _ALK_ upon these interruptions.
  
 In following subsections, we provide the scripts to conduct these three steps. 
-For demo purposes, _ALK_ uses local copies of the `arff`-formatted time series datasets that are publicly available in [[3](#ref3)].
+For demo purposes, _ALK_ uses local copies of the `arff`-formatted time series datasets that are publicly available in [[4](#ref4)].
 _Euclidean distance_ is used as the metric which is normalized taking into account the min and max values of the related dataset. 
 
 If not stated otherwise in script arguments, _ALK_ assumes that:
@@ -214,7 +214,7 @@ Afterwards, the algorithm is resumed and allowed to run until reaching the next 
 After each interruption, the _gain_ achieved by avoided similarity calculations, the _quality_ of best-so-far kNNs compared to the exact kNNs,
 and, the _efficiency_ of the confidence measure are recorded.   
 
-Every time series dataset in the repository [[3](#ref3)] is available as a two-pack of train and test sub-datasets.
+Every time series dataset in the repository [[4](#ref4)] is available as a two-pack of train and test sub-datasets.
 Some test sub-datasets are larger than their train reciprocals.
 We opt to use the larger one for the [insights](#insights-experiments) experiments,
 and the smaller one for the interruption experiments.
@@ -389,4 +389,6 @@ This project is licensed under the GNU Affero General Public License v3.0 - see 
 
 [2<a name="ref2"></a>] M.O. Mülâyim, J.L. Arcos (2020), _Fast Anytime Retrieval with Confidence in Large-Scale Temporal Case Bases_, Knowledge-Based Systems, 206, 106374 [&#8921;](https://doi.org/10.1016/j.knosys.2020.106374)
 
-[3<a name="ref3"></a>] A. Bagnall, J. Lines, W. Vickers, E. Keogh, _The UEA & UCR Time Series Classification Repository_ (Last accessed 20 January 2020) [&#8921;](http://www.timeseriesclassification.com)
+[3<a name="ref3"></a>] M.O. Mülâyim (2020), _Anytime Case-Based Reasoning in Large-Scale Temporal Case Bases_, PhD Thesis, Universitat Autònoma de Barcelona [&#8921;](https://iiia.csic.es/research/thesis-details?pastphd_id=107)
+ 
+[4<a name="ref4"></a>] A. Bagnall, J. Lines, W. Vickers, E. Keogh, _The UEA & UCR Time Series Classification Repository_ (Last accessed 20 January 2020) [&#8921;](http://www.timeseriesclassification.com)
