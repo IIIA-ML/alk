@@ -1,3 +1,6 @@
+[![IIIA-CSIC](https://img.shields.io/badge/made%20at-IIIA--CSIC-blue)](https://iiia.csic.es)
+[![DOI](https://zenodo.org/badge/262040700.svg)](https://zenodo.org/badge/latestdoi/262040700)
+
 # Anytime Lazy kNN
 
 _Anytime Lazy kNN_ (_ALK_) is an anytime algorithm for fast kNN search.
