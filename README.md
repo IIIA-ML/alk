@@ -24,6 +24,8 @@ Thus, this option further speeds up kNN classification.
 _ALK_ and _ALK Classifier_ have been developed as part of the authors' _PhD research_ at the _Artificial Intelligence Research Institute_, [IIIA-CSIC](https://iiia.csic.es/). 
 For further reading on _Anytime Lazy kNN_, please refer to the articles [[1](#ref1)] and [[2](#ref2)]. For a deeper dive into details, please refer to the thesis [[3](#ref3)].
 
+If you find our software useful for your research, please consider citing it as detailed [below](#citation).
+
 ## Table of Contents
 
 - [How to Use](#how-to-use)
@@ -54,6 +56,7 @@ For further reading on _Anytime Lazy kNN_, please refer to the articles [[1](#re
   - [Plot Cases](#plot-cases)
 - [Authors](#authors)
 - [License](#license)
+- [Citation](#citation)  
 - [References](#references)
 
 ## How to Use
@@ -385,6 +388,51 @@ Example:
 ## License
 
 This project is licensed under the GNU Affero General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
+
+## Citation
+
+To cite the _Anytime Lazy kNN_ software, please use the `biblatex` entry with the DOI attached to  a specific version (e.g. `v2.3`):
+
+```
+@software{mulayim_2021_4472642,
+  author       = {M\"{u}l\^{a}yim, Mehmet O\u{g}uz and Arcos, Josep Llu\'{i}s},
+  title        = {Anytime Lazy kNN},
+  month        = jan,
+  year         = 2021,
+  publisher    = {Zenodo},
+  version      = {v2.3},
+  doi          = {10.5281/zenodo.4472642},
+  url          = {https://doi.org/10.5281/zenodo.4472642}
+}
+```
+
+If you want to cite the repository regardless of versions, you can use the concept DOI:
+
+```
+@software{mulayim_2020_4472641,
+  author       = {M\"{u}l\^{a}yim, Mehmet O\u{g}uz and Arcos, Josep Llu\'{i}s},
+  title        = {Anytime Lazy kNN},
+  month        = nov,
+  year         = 2020,
+  publisher    = {Zenodo},
+  doi          = {10.5281/zenodo.4472641},
+  url          = {https://doi.org/10.5281/zenodo.4472641}
+}
+```
+
+Kindly consider citing our software together with the thesis:
+
+```
+@phdthesis{mulayim_2020_thesis,
+  author  = {M\"{u}l\^{a}yim, Mehmet O\u{g}uz},
+  title = {{Anytime Case-Based Reasoning in Large-Scale Temporal Case Bases}},
+  school = {Universitat Aut\`{o}noma de Barcelona},
+  address = {Barcelona, Spain},
+  month   = nov,
+  year    = 2020,
+  url = {https://iiia.csic.es/research/thesis-details?pastphd{\_}id=107}
+}
+```
 
 ## References
 
