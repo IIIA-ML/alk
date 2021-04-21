@@ -391,18 +391,18 @@ This project is licensed under the GNU Affero General Public License v3.0 - see 
 
 ## Citation
 
-To cite the _Anytime Lazy kNN_ software, please use the `biblatex` entry with the DOI attached to  a specific version (e.g. `v2.3`):
+To cite the _Anytime Lazy kNN_ software, we recommend using the following `biblatex` entry with the DOI attached to a specific version (e.g. `v2.3`):
 
 ```
 @software{mulayim_2021_4472642,
-  author       = {M\"{u}l\^{a}yim, Mehmet O\u{g}uz and Arcos, Josep Llu\'{i}s},
-  title        = {Anytime Lazy kNN},
-  month        = jan,
-  year         = 2021,
-  publisher    = {Zenodo},
-  version      = {v2.3},
-  doi          = {10.5281/zenodo.4472642},
-  url          = {https://doi.org/10.5281/zenodo.4472642}
+  author    = {M\"{u}l\^{a}yim, Mehmet O\u{g}uz and Arcos, Josep Llu\'{i}s},
+  title     = {Anytime Lazy kNN (ALK)},
+  month     = jan,
+  year      = 2021,
+  publisher = {Zenodo},
+  version   = {v2.3},
+  doi       = {10.5281/zenodo.4472642},
+  url       = {https://doi.org/10.5281/zenodo.4472642}
 }
 ```
 
@@ -410,13 +410,13 @@ If you want to cite the repository regardless of versions, you can use the conce
 
 ```
 @software{mulayim_2020_4472641,
-  author       = {M\"{u}l\^{a}yim, Mehmet O\u{g}uz and Arcos, Josep Llu\'{i}s},
-  title        = {Anytime Lazy kNN},
-  month        = nov,
-  year         = 2020,
-  publisher    = {Zenodo},
-  doi          = {10.5281/zenodo.4472641},
-  url          = {https://doi.org/10.5281/zenodo.4472641}
+  author    = {M\"{u}l\^{a}yim, Mehmet O\u{g}uz and Arcos, Josep Llu\'{i}s},
+  title     = {Anytime Lazy kNN (ALK)},
+  month     = nov,
+  year      = 2020,
+  publisher = {Zenodo},
+  doi       = {10.5281/zenodo.4472641},
+  url       = {https://doi.org/10.5281/zenodo.4472641}
 }
 ```
 
@@ -425,12 +425,12 @@ Kindly consider citing our software together with the thesis:
 ```
 @phdthesis{mulayim_2020_thesis,
   author  = {M\"{u}l\^{a}yim, Mehmet O\u{g}uz},
-  title = {{Anytime Case-Based Reasoning in Large-Scale Temporal Case Bases}},
-  school = {Universitat Aut\`{o}noma de Barcelona},
+  title   = {{Anytime Case-Based Reasoning in Large-Scale Temporal Case Bases}},
+  school  = {Universitat Aut\`{o}noma de Barcelona},
   address = {Barcelona, Spain},
   month   = nov,
   year    = 2020,
-  url = {https://iiia.csic.es/research/thesis-details?pastphd{\_}id=107}
+  url     = {http://hdl.handle.net/10803/671283}
 }
 ```
 
@@ -440,6 +440,6 @@ Kindly consider citing our software together with the thesis:
 
 [2<a name="ref2"></a>] M.O. Mülâyim, J.L. Arcos (2020), _Fast Anytime Retrieval with Confidence in Large-Scale Temporal Case Bases_, Knowledge-Based Systems, 206, 106374 [&#8921;](https://doi.org/10.1016/j.knosys.2020.106374)
 
-[3<a name="ref3"></a>] M.O. Mülâyim (2020), _Anytime Case-Based Reasoning in Large-Scale Temporal Case Bases_, PhD Thesis, Universitat Autònoma de Barcelona [&#8921;](https://iiia.csic.es/research/thesis-details?pastphd_id=107)
+[3<a name="ref3"></a>] M.O. Mülâyim (2020), _Anytime Case-Based Reasoning in Large-Scale Temporal Case Bases_, PhD Thesis, Universitat Autònoma de Barcelona [&#8921;](http://hdl.handle.net/10803/671283)
  
 [4<a name="ref4"></a>] A. Bagnall, J. Lines, W. Vickers, E. Keogh, _The UEA & UCR Time Series Classification Repository_ (Last accessed 20 January 2020) [&#8921;](http://www.timeseriesclassification.com)
