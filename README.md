@@ -4,9 +4,9 @@
 # Anytime Lazy kNN
 
 _Anytime Lazy kNN_ (_ALK_) is an anytime algorithm for fast k-nearest neighbors (kNN) search.
-It finds _exact_ kNNs when allowed to run to completion with remarkable gain in execution time compared to a brute-force search.
+It finds _exact_ kNN when allowed to run to completion with remarkable gain in execution time compared to a brute-force search.
 For applications where the gain in exact kNN search may not suffice,
-_ALK_ can be interrupted earlier, and it returns _best-so-far_ kNNs together with a confidence value attached to each neighbor.
+_ALK_ can be interrupted earlier, and it returns _best-so-far_ kNN together with a confidence value attached to each neighbor.
 Furthermore, it can automatically interrupt the search upon reaching a given confidence threshold and resume if so asked.
 
 _ALK_ owes its speed to detecting and assessing only _true kNN candidates_ of the given _query_.
@@ -18,7 +18,7 @@ A typical example is a case base of health records of patients. Treatment sessio
 Beside being an algorithm, _ALK_ also introduces a _methodology_ which may be applied to exact and approximate kNN search in domains with similar problem space characteristics.
 
 _ALK Classifier_ is an extension to _ALK_ for its use as a kNN classifier. 
-_ALK Classifier_ also offers the option to interrupt the algorithm upon guaranteeing exact solution without the need to find all exact kNNs, when possible. 
+_ALK Classifier_ also offers the option to interrupt the algorithm upon guaranteeing exact solution without the need to find all exact kNN, when possible. 
 Thus, this option further speeds up kNN classification. 
 
 _ALK_ and _ALK Classifier_ have been developed as part of the authors' _PhD research_ at the _Artificial Intelligence Research Institute_, [IIIA-CSIC](https://iiia.csic.es/). 
@@ -94,7 +94,7 @@ A fully fledged experimentation with _Anytime Lazy KNN_ consists of three steps:
 
 1. Gather execution insights of _ALK_ on a case base,
 2. Using these insights, generate the _Performance Distrubution Profile_ (PDP) of _ALK_ for that case base,
-3. Use PDP to estimate the confidence for best-so-far kNNs and, thus, to automatize interruption upon reaching given confidence thresholds. 
+3. Use PDP to estimate the confidence for best-so-far kNN and, thus, to automatize interruption upon reaching given confidence thresholds. 
 Finally, calculate gain & efficiency of confidence of _ALK_ upon these interruptions.
  
 In following subsections, we provide the scripts to conduct these three steps. 
@@ -145,7 +145,7 @@ Example:
 ```
 
 #### Plot Insights
-Plot the _total_ and _actual_ similarity assessments made by _ALK_ to find kNNs. 
+Plot the _total_ and _actual_ similarity assessments made by _ALK_ to find kNN. 
 _actual_ value for a kNN member is the number of similarity assessments after which it is actually found, 
 and _total_ value is the total number of assessments made to ascertain its exactness. 
 
@@ -178,7 +178,7 @@ Example:
 ### Generate Performance Distribution Profile
 
 This script generates the PDP of _ALK_ out of the Quality Map obtained in the [above](#insights-experiments) experiment. 
-PDP is used to estimate the _expected quality_ (i.e. confidence) of the best-so-far kNNs upon interruption.
+PDP is used to estimate the _expected quality_ (i.e. confidence) of the best-so-far kNN upon interruption.
 Furthermore, it provides us a means to estimate the number of similarity assessments needed to reach a confidence threshold.
 A PDP is generated for each experiment case base. 
 
@@ -217,7 +217,7 @@ This script is used to conduct experiments to collect gain and confidence effici
 First, test sequences are extracted from the case base that is generated for the given time series dataset.
 Then, for each problem update of each test sequence, the script interrupts _ALK_ upon reaching a given confidence threshold.
 Afterwards, the algorithm is resumed and allowed to run until reaching the next threshold.
-After each interruption, the _gain_ achieved by avoided similarity calculations, the _quality_ of best-so-far kNNs compared to the exact kNNs,
+After each interruption, the _gain_ achieved by avoided similarity calculations, the _quality_ of best-so-far kNN compared to the exact kNN,
 and, the _efficiency_ of the confidence measure are recorded.   
 
 Every time series dataset in the repository [[4](#ref4)] is available as a two-pack of train and test sub-datasets.
@@ -264,8 +264,8 @@ Example:
 
 ### Classification Experiments
 This script is used to conduct experiments to collect gain, confidence efficiency and _solution hit_ data of _ALK Classifier_ 
-upon interruptions at confidence thresholds and/or upon guaranteeing exact solution with best-so-far kNNs.
-A solution hit upon interruption occurs when the solution suggested by best-so-far kNNs is equal to the solution with exact kNNs.
+upon interruptions at confidence thresholds and/or upon guaranteeing exact solution with best-so-far kNN.
+A solution hit upon interruption occurs when the solution suggested by best-so-far kNN is equal to the solution with exact kNN.
 
 Example:
 - Use `SwedishLeaf_TRAIN.arff` dataset
