@@ -3,7 +3,7 @@
 
 # Anytime Lazy kNN
 
-_Anytime Lazy kNN_ (_ALK_) is an anytime algorithm for fast kNN search.
+_Anytime Lazy kNN_ (_ALK_) is an anytime algorithm for fast k-nearest neighbors (kNN) search.
 It finds _exact_ kNNs when allowed to run to completion with remarkable gain in execution time compared to a brute-force search.
 For applications where the gain in exact kNN search may not suffice,
 _ALK_ can be interrupted earlier, and it returns _best-so-far_ kNNs together with a confidence value attached to each neighbor.
